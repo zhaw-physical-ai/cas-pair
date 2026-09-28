@@ -17,20 +17,27 @@ page is about the Jetson itself. What to do with a robot is in that robot's fold
 | `orin-nano-3` | group 2 | 192.168.0.191 | needs nano, uv, VS Code, `~/cas` |
 | `orin-nano-4` | group 3 | 192.168.0.111 | yes |
 | `orin-nano-5` | group 4 | 192.168.0.58 | needs nano, uv, VS Code, `~/cas` |
-| `orin-nano-6` | group 5 | 192.168.0.224 | flashed, still named `PhyAI01`; needs rename + prerequisites |
+| `orin-nano-6` | group 5 | 192.168.0.116 | freshly flashed; ssh works, prerequisites not yet installed |
 
 One machine per group for the whole course, so the machine is yours to keep tidy.
 
-**Use the names, not the addresses.** Those are DHCP leases and change on reboot; the names
-resolve over mDNS from anywhere on the same network:
+**You have to be on the PhysicalAI wifi.** Every address here is private to that network.
+From a phone hotspot or any other wifi there is no route to them at all - not a slow one, no
+route - so check which network your laptop is on before concluding a machine is down.
+
+Try the name first, and fall back to the address:
 
 ```bash
-ping orin-nano-1.local
-ssh <user>@orin-nano-1.local
+ssh <user>@orin-nano-1.local          # mDNS, when the machine advertises itself
+ssh <user>@192.168.0.217              # the address from the table
 ```
 
-If a name does not resolve, the machine is off or has not joined the wifi - the second needs
-a screen and keyboard, because it cannot be fixed over a network it is not on.
+The name is the better habit, because the addresses are DHCP leases and change on reboot. But
+mDNS is not reliable here - on 28 Sep 2026 only `orin-nano-1` answered to its `.local` name -
+so keep the table, and update it when you see a machine on a new address.
+
+If neither works, the machine is off or has not joined the wifi. That one needs its screen and
+keyboard: a machine cannot be fixed over a network it is not on.
 
 ## What is already on it
 
