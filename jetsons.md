@@ -10,16 +10,16 @@ page is about the Jetson itself. What to do with a robot is in that robot's fold
 
 ## The machines
 
-| Name | Address last seen | State |
-|---|---|---|
-| `orin-nano-1` | 192.168.0.217 | in use |
-| `orin-nano-2` | 192.168.0.145 | in use |
-| `orin-nano-3` | 192.168.0.191 | in use |
-| `orin-nano-4` | 192.168.0.111 | added, not yet configured |
-| `orin-nano-5` | 192.168.0.58 | in use |
-| `orin-nano-6` | - | to be flashed |
+| Name | Who | Address last seen | Ready |
+|---|---|---|---|
+| `orin-nano-1` | teacher | 192.168.0.217 | needs nano, uv, VS Code, `~/cas` |
+| `orin-nano-2` | group 1 | 192.168.0.145 | needs nano, uv, VS Code, `~/cas` |
+| `orin-nano-3` | group 2 | 192.168.0.191 | needs nano, uv, VS Code, `~/cas` |
+| `orin-nano-4` | group 3 | 192.168.0.111 | yes |
+| `orin-nano-5` | group 4 | 192.168.0.58 | needs nano, uv, VS Code, `~/cas` |
+| `orin-nano-6` | group 5 | 192.168.0.224 | flashed, still named `PhyAI01`; needs rename + prerequisites |
 
-One machine per group, and each carries whichever robot it is paired with for that session.
+One machine per group for the whole course, so the machine is yours to keep tidy.
 
 **Use the names, not the addresses.** Those are DHCP leases and change on reboot; the names
 resolve over mDNS from anywhere on the same network:
@@ -38,6 +38,7 @@ a screen and keyboard, because it cannot be fixed over a network it is not on.
 |---|---|
 | OS | Ubuntu 24.04, aarch64 |
 | `git` | for getting code on and off the machine |
+| `nano` | a terminal editor, for when a GUI is more trouble than it is worth |
 | `uv` | Python environments and packages, faster than pip and easier to throw away |
 | VS Code | including the terminal, if you prefer it to a bare shell |
 | Docker | working for your user - check with `docker run --rm hello-world` |
@@ -51,13 +52,15 @@ If `docker run` complains about permissions, your user is not in the `docker` gr
 sudo usermod -aG docker $USER      # then log out and back in
 ```
 
-## Preparing a Jetson
+## Preparing a Jetson (teacher only)
 
-For whoever hands the machines over, not for students. Ubuntu 24.04 on an Orin, freshly
-flashed.
+How the machines were set up. Everything below assumes a freshly flashed Orin running
+Ubuntu 24.04, already through NVIDIA's own first-boot steps:
+[Unbox and connect the developer kit](https://docs.nvidia.com/jetson/orin-nano-devkit/user-guide/latest/quick_start.html#unbox-and-connect-the-developer-kit).
 
 ```bash
-sudo apt update && sudo apt install -y git curl build-essential
+sudo apt update && sudo apt install -y git curl build-essential nano
+mkdir -p ~/cas                      # everyone's work lives under here
 ```
 
 **Docker**, and make it usable without `sudo`:
@@ -67,6 +70,21 @@ sudo apt install -y docker.io
 sudo usermod -aG docker $USER        # log out and back in for this to take effect
 docker run --rm hello-world
 ```
+
+**Pick one Docker and stay with it.** Ubuntu's `docker.io` and Docker's own `docker-ce` (what
+`get.docker.com` installs) conflict. Running the second on a machine that already has the
+first can leave both half-removed: `dpkg -l` shows them as `rc`, the `docker` CLI is still
+there, and `docker.service` fails with no `dockerd` behind it. If that happens, reinstall one
+of them cleanly rather than trying to repair it:
+
+```bash
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+systemctl is-active docker
+```
+
+The NVIDIA container toolkit is only needed if containers must use the GPU. For the Go2 work
+they do not - it is CPU and networking. `nvidia-ctk runtime configure` adds `nvidia` as an
+available runtime, not the default, so it is harmless either way.
 
 **uv** - Python environments and packages:
 
@@ -109,11 +127,35 @@ sudo iw dev wlP1p1s0 set power_save off                     # and now, without r
 
 ```bash
 . /etc/os-release; echo "$PRETTY_NAME"      # Ubuntu 24.04
-git --version; uv --version; code --version | head -1
+git --version; uv --version; code --version | head -1; nano --version | head -1
 docker run --rm hello-world
 localectl status | grep X11
 nmcli -g 802-11-wireless.powersave con show <wifi-name>
+ls -d ~/cas
 ```
+
+## Where to work
+
+Everything you make goes under `~/cas`, in a folder named after your ZHAW shortname:
+
+```bash
+mkdir -p ~/cas/<shortname>          # e.g. ~/cas/johm
+cd ~/cas/<shortname>
+```
+
+These machines are shared - several people use the same login - so the shortname is what
+keeps your work separate from everyone else's. Scripts, workspaces, notes, experiments: all
+of it in there, not scattered across the home directory.
+
+```bash
+ls ~/cas                            # who else has been on this machine
+```
+
+Two habits worth having from the start:
+
+- **Push to git.** These machines are shared and get reimaged between courses. Anything only
+  on a Jetson is temporary.
+- **Say which machine you were on** when you ask for help. `hostname` tells you.
 
 ## Finding your way around
 
@@ -130,14 +172,26 @@ completely separate - the robot link is a private cable with no router and no in
 
 ## Working on it
 
-You can sit at the screen, or reach it from your laptop over the network:
+You can sit at the screen, or reach it from your laptop over the network. You need to be on
+the same wifi as the machine.
 
 ```bash
-ssh <user>@<hostname>.local
+ssh ema-student@192.168.0.111        # your machine's address, from the table above
 ```
 
+By name works too, when the machine is advertising itself:
+
+```bash
+ssh ema-student@orin-nano-4.local
+```
+
+The name is the better habit - addresses are DHCP leases and change on reboot - but it does
+not always resolve, so keep the table handy. If neither works, the machine is off or not on
+the wifi, and that needs its screen and keyboard: a machine cannot be fixed over a network it
+is not on.
+
 Both are fine. The screen is simpler for a first session; SSH is better once you are editing
-code, because you can use your own editor.
+code, because you can use your own editor and your own terminal.
 
 Anything you want to keep, push to git. These machines are shared and get reimaged.
 
