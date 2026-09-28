@@ -8,6 +8,30 @@ your own laptop.
 The same machines are used for the Go2 quadrupeds and the SO-101 arms, which is why this
 page is about the Jetson itself. What to do with a robot is in that robot's folder.
 
+## The machines
+
+| Name | Address last seen | State |
+|---|---|---|
+| `orin-nano-1` | 192.168.0.217 | in use |
+| `orin-nano-2` | 192.168.0.145 | in use |
+| `orin-nano-3` | 192.168.0.191 | in use |
+| `orin-nano-4` | 192.168.0.111 | added, not yet configured |
+| `orin-nano-5` | 192.168.0.58 | in use |
+| `orin-nano-6` | - | to be flashed |
+
+One machine per group, and each carries whichever robot it is paired with for that session.
+
+**Use the names, not the addresses.** Those are DHCP leases and change on reboot; the names
+resolve over mDNS from anywhere on the same network:
+
+```bash
+ping orin-nano-1.local
+ssh <user>@orin-nano-1.local
+```
+
+If a name does not resolve, the machine is off or has not joined the wifi - the second needs
+a screen and keyboard, because it cannot be fixed over a network it is not on.
+
 ## What is already on it
 
 | | |
