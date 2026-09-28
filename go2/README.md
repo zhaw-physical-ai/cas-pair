@@ -1,6 +1,6 @@
 # The Go2
 
-A Unitree Go2 quadruped, a Jetson on its back, and four tasks. By the end you should be able
+A Unitree Go2 quadruped, a Jetson on its back, and five tasks. By the end you should be able
 to drive it from your own code, see what it sees, record what it did, and have it avoid
 something.
 
@@ -45,24 +45,59 @@ reach the Jetson. The robot link never leaves the cable.
   leaves you time to react.
 - The phone app must not be connected while you are driving. It takes priority.
 
-## Task 1 - make it walk from your own code
+## Task 1 - get your Jetson ready
 
-Get ROS 2 running on the Jetson and move the robot from a node you wrote.
+Your machine has git, Docker, uv, VS Code and nano on it. It has no ROS. Putting ROS on it is
+the first task, and the first decision.
 
-Natively or in a container, your choice - the Jetson runs Ubuntu 24.04, so both are open to
-you. The decision is worth thinking about rather than guessing: one is faster to start, the
-other is easier to reproduce on the next machine.
+### Native, or in a container
 
-Three things you will discover, and they are the point of the task:
+**A ROS 2 distribution is tied to an Ubuntu version.** That is not a detail you can route
+around - each release is built against one Ubuntu, and there are simply no packages for the
+others.
+
+| | |
+|---|---|
+| Your Jetson runs | Ubuntu 24.04 |
+| The ROS 2 release for 24.04 | **Jazzy** |
+| Humble targets | Ubuntu 22.04 |
+
+So **natively, Jazzy is your only option.** There is no `ros-humble-*` package for this
+machine and no amount of apt persuasion will produce one.
+
+**A container changes that**, because it brings its own Ubuntu with it. Inside a
+`ros:humble` image you are on 22.04 and Humble is simply there. So the real choice is:
+
+- **Native Jazzy** - fewer moving parts, everything is where you expect it, and a mistake is
+  yours to unpick. Fastest to a first result.
+- **Humble (or Jazzy) in Docker** - the machine stays clean, you can throw a broken attempt
+  away and start again, and the setup is reproducible on the next Jetson. More to learn first,
+  and a container that cannot reach the robot is a new kind of confusing.
+
+Either works with the dog. Neither is the "right" answer, but **pick one and stay with it** -
+half a ROS on the host and half in a container is the one combination that wastes an
+afternoon.
+
+Two things your setup has to account for, whichever way you go:
 
 - the dog speaks **CycloneDDS**, so your ROS has to as well
 - it publishes and accepts **Unitree's own message types**, which you will have to build
+
+**Done when:** `ros2 topic list` from your setup shows the robot's topics, and you can get
+back to that same state in a new terminal tomorrow without guessing. Write down what you did.
+
+## Task 2 - make it walk from your own code
+
+Move the robot from a node you wrote.
+
+The thing you will discover, and it is the point of the task:
+
 - **there is no `/cmd_vel` on a Go2.** Walking is a request on its own API. Finding out what
   that request looks like, and turning a `geometry_msgs/Twist` into one, is the task
 
 **Done when:** you press a key and the dog walks, and releasing it stops.
 
-## Task 2 - see what it sees
+## Task 3 - see what it sees
 
 Get a view of the robot's data. RViz, Foxglove Studio, Lichtblick - try more than one, they
 are not equivalent.
@@ -74,7 +109,7 @@ lidar, and those you can plot and render.
 **Done when:** you can watch a value change as the robot moves, and explain which tool you
 would use for which job.
 
-## Task 3 - record it and play it back
+## Task 4 - record it and play it back
 
 Record the robot doing something with `ros2 bag`, then replay it and watch it in RViz.
 
@@ -90,7 +125,7 @@ Two things to think about:
 **Done when:** you can replay a route and show it in RViz, and say what differs between the
 recording and the replay.
 
-## Task 4 - avoid something
+## Task 5 - avoid something
 
 Write a node that stops or turns the dog before it hits an obstacle, using the lidar.
 
