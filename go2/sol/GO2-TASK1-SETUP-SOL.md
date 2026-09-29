@@ -19,6 +19,7 @@ The packages the tasks need:
 
 ```
 sudo apt install -y ros-jazzy-rmw-cyclonedds-cpp \
+                    ros-jazzy-rosidl-generator-dds-idl \
                     ros-jazzy-teleop-twist-keyboard \
                     ros-jazzy-sensor-msgs-py \
                     ros-jazzy-foxglove-bridge \
@@ -133,6 +134,11 @@ understands is task 2, and there is no package for it. See `GO2-TASK2-DRIVE-SOL.
 - `RMW_IMPLEMENTATION` is not set in *this* terminal
 - `CYCLONEDDS_URI` is not pinning the interface, and CycloneDDS bound the wifi instead
 - a stale CLI daemon is answering - try `ros2 topic list --no-daemon`
+
+`colcon build` fails with `Could not find a package configuration file provided by
+"rosidl_generator_dds_idl"`:
+- that generator is not pulled in by `ros-jazzy-desktop` or `ros-base`. Install
+  `ros-jazzy-rosidl-generator-dds-idl` and build again
 
 Topics are listed but their types show as unknown:
 - the Unitree message packages are not built, or `install/setup.bash` is not sourced here

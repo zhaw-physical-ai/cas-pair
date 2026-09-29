@@ -7,6 +7,7 @@ What to pull, and what each thing actually gives you.
 ```
 sudo apt install -y ros-jazzy-desktop \
                     ros-jazzy-rmw-cyclonedds-cpp \
+                    ros-jazzy-rosidl-generator-dds-idl \
                     ros-jazzy-teleop-twist-keyboard \
                     ros-jazzy-sensor-msgs-py \
                     ros-jazzy-foxglove-bridge \
@@ -17,6 +18,7 @@ sudo apt install -y ros-jazzy-desktop \
 |---|---|---|
 | `ros-jazzy-desktop` | ROS 2 plus `rviz2` and `rosbag2` | 1, 3, 4 |
 | `ros-jazzy-rmw-cyclonedds-cpp` | the middleware the dog speaks. **Not optional** | 1 |
+| `ros-jazzy-rosidl-generator-dds-idl` | the Unitree messages will not configure without it. **Not optional** | 1 |
 | `ros-jazzy-teleop-twist-keyboard` | keyboard -> `geometry_msgs/Twist` on `/cmd_vel` | 2 |
 | `ros-jazzy-sensor-msgs-py` | `read_points`, for the lidar | 5 |
 | `ros-jazzy-foxglove-bridge` | a websocket at `ws://<jetson>:8765` for Foxglove / Lichtblick | 3 |
