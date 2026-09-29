@@ -174,7 +174,7 @@ lerobot-replay \
 ```
 
 
-- Train a policy (not recommended on jetson - use GPU server like runpod)
+## Train a policy on Jetson (not recommended - use GPU server like runpod)
 
 uv pip install 'lerobot[training]'
 
@@ -202,6 +202,9 @@ sudo reboot
 
 tune parameters like batch size, workers, ....
 
+
+## Training on Runpod
+TODO
 
 # Troubleshooting
 Helpful troubleshooting tips:
