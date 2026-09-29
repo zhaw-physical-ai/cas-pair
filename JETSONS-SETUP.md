@@ -10,14 +10,14 @@ page is about the Jetson itself. What to do with a robot is in that robot's fold
 
 ## The machines
 
-| Name | Who | Address last seen | Ready |
-|---|---|---|---|
-| `orin-nano-1` | teacher | 192.168.0.217 | needs nano, uv, VS Code, `~/cas` |
-| `orin-nano-2` | group 1 | 192.168.0.145 | needs nano, uv, VS Code, `~/cas` |
-| `orin-nano-3` | group 2 | 192.168.0.191 | needs nano, uv, VS Code, `~/cas` |
-| `orin-nano-4` | group 3 | 192.168.0.111 | yes |
-| `orin-nano-5` | group 4 | 192.168.0.58 | needs nano, uv, VS Code, `~/cas` |
-| `orin-nano-6` | group 5 | 192.168.0.116 | freshly flashed; ssh works, prerequisites not yet installed |
+| Name            | Who     | Address last seen | Ready           |
+| --------------- | ------- | ----------------- | --------------- |
+| `orin-nano-1` | teacher | 192.168.0.217     | yes (keeps ROS) |
+| `orin-nano-2` | group 1 | 192.168.0.145     | yes             |
+| `orin-nano-3` | group 2 | 192.168.0.191     | yes             |
+| `orin-nano-4` | group 3 | 192.168.0.111     | yes             |
+| `orin-nano-5` | group 4 | 192.168.0.58      | yes             |
+| `orin-nano-6` | group 5 | 192.168.0.116     | yes             |
 
 One machine per group for the whole course, so the machine is yours to keep tidy.
 
@@ -28,8 +28,8 @@ route - so check which network your laptop is on before concluding a machine is 
 Try the name first, and fall back to the address:
 
 ```bash
-ssh <user>@orin-nano-1.local          # mDNS, when the machine advertises itself
-ssh <user>@192.168.0.217              # the address from the table
+ssh ema-student@orin-nano-1.local          # mDNS, when the machine advertises itself
+ssh ema-student@192.168.0.217              # the address from the table
 ```
 
 The name is the better habit, because the addresses are DHCP leases and change on reboot. But
@@ -41,14 +41,14 @@ keyboard: a machine cannot be fixed over a network it is not on.
 
 ## What is already on it
 
-| | |
-|---|---|
-| OS | Ubuntu 24.04, aarch64 |
-| `git` | for getting code on and off the machine |
-| `nano` | a terminal editor, for when a GUI is more trouble than it is worth |
-| `uv` | Python environments and packages, faster than pip and easier to throw away |
-| VS Code | including the terminal, if you prefer it to a bare shell |
-| Docker | working for your user - check with `docker run --rm hello-world` |
+|          |                                                                            |
+| -------- | -------------------------------------------------------------------------- |
+| OS       | Ubuntu 24.04, aarch64                                                      |
+| `git`  | for getting code on and off the machine                                    |
+| `nano` | a terminal editor, for when a GUI is more trouble than it is worth         |
+| `uv`   | Python environments and packages, faster than pip and easier to throw away |
+| VS Code  | including the terminal, if you prefer it to a bare shell                   |
+| Docker   | working for your user - check with`docker run --rm hello-world`          |
 
 **Nothing else.** No ROS, no robot drivers, no workspace. Installing what you need is the
 first task, and it is a real one: the choices you make there decide how easy the rest is.
@@ -67,7 +67,7 @@ Ubuntu 24.04, already through NVIDIA's own first-boot steps:
 
 ```bash
 sudo apt update && sudo apt install -y git curl build-essential nano
-mkdir -p ~/cas                      # everyone's work lives under here
+mkdir -p ~/repos                    # everyone's work lives under here
 ```
 
 **Docker**, and make it usable without `sudo`:
@@ -111,7 +111,9 @@ echo "deb [arch=arm64 signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https:
 sudo apt update && sudo apt install -y code
 ```
 
-**ROS2 Jazzy**
+**ROS 2 Jazzy - on the teacher machine only.** The student machines get no ROS: installing it
+is task 1, and a Jetson that already has it has had that task done for it.
+
 ```bash
 locale  # check for UTF-8
 
@@ -136,7 +138,6 @@ echo 'source /opt/ros/jazzy/setup.bash' >> ~/.bashrc
 sudo rosdep init
 rosdep update
 ```
-
 
 **Keyboard**, if the machines have Swiss keyboards. `localectl` refuses on Ubuntu because
 `console-setup` owns this file:
@@ -165,24 +166,25 @@ git --version; uv --version; code --version | head -1; nano --version | head -1
 docker run --rm hello-world
 localectl status | grep X11
 nmcli -g 802-11-wireless.powersave con show <wifi-name>
-ls -d ~/cas
+ls -d ~/repos
 ```
 
 ## Where to work
 
-Everything you make goes under `~/cas`, in a folder named after your ZHAW shortname:
+Everything you make goes under `~/repos`, in a folder of your own. Same convention as the
+SO-101 labs, so one machine serves both:
 
 ```bash
-mkdir -p ~/cas/<shortname>          # e.g. ~/cas/johm
-cd ~/cas/<shortname>
+mkdir -p ~/repos/cas_26_YOUR_NAME   # e.g. ~/repos/cas_26_johm
+cd ~/repos/cas_26_YOUR_NAME
 ```
 
-These machines are shared - several people use the same login - so the shortname is what
-keeps your work separate from everyone else's. Scripts, workspaces, notes, experiments: all
-of it in there, not scattered across the home directory.
+These machines are shared - several people use the same login - so that folder is what keeps
+your work separate from everyone else's. Clone your repos into it; scripts, workspaces,
+notes and experiments all live there, not scattered across the home directory.
 
 ```bash
-ls ~/cas                            # who else has been on this machine
+ls ~/repos                          # who else has been on this machine
 ```
 
 Two habits worth having from the start:
