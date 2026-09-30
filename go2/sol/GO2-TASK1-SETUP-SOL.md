@@ -33,13 +33,26 @@ echo 'source /opt/ros/jazzy/setup.bash' >> ~/.bashrc
 The packages the tasks need:
 
 ```
-sudo apt install -y ros-jazzy-rmw-cyclonedds-cpp \
-                    ros-jazzy-rosidl-generator-dds-idl \
-                    ros-jazzy-teleop-twist-keyboard \
-                    ros-jazzy-sensor-msgs-py \
-                    ros-jazzy-foxglove-bridge \
-                    python3-colcon-common-extensions
+sudo apt install -y \
+  ros-jazzy-rmw-cyclonedds-cpp \
+  ros-jazzy-rosidl-generator-dds-idl \
+  python3-colcon-common-extensions \
+  ros-jazzy-teleop-twist-keyboard \
+  ros-jazzy-foxglove-bridge \
+  ros-jazzy-sensor-msgs-py
 ```
+
+The first three you need now:
+
+- `rmw-cyclonedds-cpp` - the middleware the dog speaks. **Not optional**
+- `rosidl-generator-dds-idl` - the Unitree messages will not build without it
+- `colcon-common-extensions` - the build tool
+
+The last three are for later tasks. Install them now so you do not have to stop again:
+
+- `teleop-twist-keyboard` - keyboard to `Twist` on `/cmd_vel`, task 3
+- `foxglove-bridge` - the websocket for Lichtblick or Foxglove, task 2
+- `sensor-msgs-py` - `read_points`, for the lidar, task 5
 
 ## Build the Unitree message types
 

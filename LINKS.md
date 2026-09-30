@@ -1,29 +1,7 @@
 # Links and tools
 
-Where things come from and what each one is for, for both labs. **Not instructions** - the
-commands live in the task files. For the Go2, that is
-[`go2/sol/GO2-TASK1-SETUP-SOL.md`](go2/sol/GO2-TASK1-SETUP-SOL.md), and the ROS apt repository
-has to be added before any of these install.
-
-## Go2 - packages you install
-
-| package | gives you | task |
-|---|---|---|
-| `ros-jazzy-desktop` | ROS 2 plus `rviz2` and `rosbag2` | 1, 2, 4 |
-| `ros-jazzy-rmw-cyclonedds-cpp` | the middleware the dog speaks. **Not optional** | 1 |
-| `ros-jazzy-rosidl-generator-dds-idl` | the Unitree messages will not configure without it. **Not optional** | 1 |
-| `ros-jazzy-teleop-twist-keyboard` | keyboard -> `geometry_msgs/Twist` on `/cmd_vel` | 3 |
-| `ros-jazzy-sensor-msgs-py` | `read_points`, for the lidar | 5 |
-| `ros-jazzy-foxglove-bridge` | a websocket at `ws://<jetson>:8765` for Foxglove / Lichtblick | 2 |
-| `python3-colcon-common-extensions` | the build tool | 1 |
-
-## Go2 - source you clone
-
-**[unitree_ros2](https://github.com/unitreerobotics/unitree_ros2)** - the dog's own message
-types. Nothing talks to a Go2 without them. Build only `unitree_go`, `unitree_api` and
-`unitree_hg`; the rest is Foxy-era examples that will not build on Jazzy and that you do not
-need. Its README is written for Foxy - read `jazzy` wherever it says `foxy`, and skip the
-"compile cyclonedds" step.
+Tools both labs can use. **Not instructions** - what to install, and in what order, is in the
+task files themselves.
 
 ## Viewers - either lab
 
