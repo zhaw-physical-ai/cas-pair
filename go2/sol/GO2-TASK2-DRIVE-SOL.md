@@ -50,7 +50,14 @@ in a second terminal:
 ros2 topic echo /dryrun
 ```
 
-Holding a key should give `api_id: 1008` repeatedly; releasing it, one `api_id: 1003`.
+Holding a key gives `api_id: 1008` repeatedly. Releasing it gives **nothing at first** -
+`teleop_twist_keyboard` sends only on a key press, so your node sees silence - and then one
+`api_id: 1003` once your watchdog fires, about a second later.
+
+That second of delay is the whole point of the task. The dog does not stop on its own; it
+stops because *your* node noticed the silence and said so. Get this visible in the dry run
+before the robot is involved.
+
 When that is right, drop the remap and run it for real.
 
 ## If nothing moves

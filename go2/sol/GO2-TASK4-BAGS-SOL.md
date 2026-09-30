@@ -14,7 +14,13 @@ ros2 bag play my_route
 ```
 
 #ATTENTION: **replay drives the robot.** Nothing downstream can tell whether a `/cmd_vel`
-message came from your keyboard or from a bag. Remote in hand, clear space.
+message came from your keyboard or from a bag. Before you press play: remote in hand, area
+clear, someone watching the dog rather than the screen, and a short bag the first time.
+
+To watch it in rviz, remember there is **no TF tree and no robot model** on a real Go2, so
+nothing will draw a dog. Add an **Odometry** display on `/utlidar/robot_odom` and set the
+Fixed Frame to that message's own `frame_id` - you get the path it took, which is what the
+task is asking you to compare.
 
 Two things to look at:
 

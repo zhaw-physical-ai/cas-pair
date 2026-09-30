@@ -52,6 +52,10 @@ ros2 run <your_pkg> <your_avoid_node>
 
 Walk the dog at a wall. It should stop or turn before it gets there.
 
+#ATTENTION: do not leave `teleop_twist_keyboard` running at the same time. Both it and your
+avoidance node publish to `/cmd_vel`, and the bridge simply acts on whichever message arrived
+last - so a stray key press can override a stop.
+
 ## Advanced: the camera
 
 React to what something *is*, not only how far away it is.

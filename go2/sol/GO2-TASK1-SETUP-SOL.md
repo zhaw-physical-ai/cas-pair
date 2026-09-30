@@ -10,6 +10,21 @@ it is Jazzy. There is no `ros-humble-*` package for this machine.
 
 https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html
 
+#ATTENTION: a fresh Jetson has no ROS apt repository. Without this first step every
+`apt install ros-jazzy-*` below fails with `Unable to locate package`.
+
+```
+sudo apt install -y software-properties-common curl
+sudo add-apt-repository universe
+
+export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F'"' '{print $4}')
+curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME})_all.deb"
+sudo dpkg -i /tmp/ros2-apt-source.deb
+sudo apt update
+```
+
+Then ROS itself:
+
 ```
 sudo apt install -y ros-jazzy-desktop
 echo 'source /opt/ros/jazzy/setup.bash' >> ~/.bashrc
@@ -42,9 +57,17 @@ and are not needed:
 ```
 cd ~/repos/cas_26_YOUR_NAME/ros_ws
 source /opt/ros/jazzy/setup.bash
-colcon build --packages-select unitree_go unitree_api unitree_hg
+colcon build --packages-select unitree_go unitree_api unitree_hg \
+  --cmake-args -DPython3_EXECUTABLE=/usr/bin/python3
 source install/setup.bash
 ```
+
+#ATTENTION: that `-DPython3_EXECUTABLE` is not optional on these machines. `uv` puts its own
+Python in `~/.local/bin`, ahead of the system one on your PATH. CMake picks it up, and it has
+none of ROS's Python dependencies - the build dies with `ModuleNotFoundError: No module named
+'em'`, which says nothing about the real cause. The flag tells CMake which Python to use.
+
+Verified on 29 Sep 2026: `Summary: 3 packages finished` in about a minute.
 
 Check they are there:
 
@@ -68,19 +91,26 @@ the robot is ready to talk ROS, which takes longer.
 
 ## Point ROS at the dog
 
-Per terminal, not in `~/.bashrc` - the machines are shared:
-
-```
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export CYCLONEDDS_URI='<CycloneDDS><Domain><General><Interfaces>
-  <NetworkInterface name="enP8p1s0"/></Interfaces></General></Domain></CycloneDDS>'
-```
-
-Find the interface name - it is the one holding the `192.168.123.x` address:
+Find the interface name first - it is the one holding the `192.168.123.x` address, and it
+is **not** the same on every machine (a USB Ethernet adapter comes up as `enx...`):
 
 ```
 ip -br addr
 ```
+
+Then, in **every terminal** you work in. All four lines, every time - the machines are
+shared, so do not put them in `~/.bashrc`:
+
+```
+source /opt/ros/jazzy/setup.bash
+source ~/repos/cas_26_YOUR_NAME/ros_ws/install/setup.bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export CYCLONEDDS_URI='<CycloneDDS><Domain><General><Interfaces>
+  <NetworkInterface name="YOUR_INTERFACE"/></Interfaces></General></Domain></CycloneDDS>'
+```
+
+Forgetting the second line is the most common way to lose twenty minutes: the topics appear
+but their types show as unknown, because the Unitree messages live in that workspace.
 
 `unitree_ros2` ships its own `setup.sh` that sets both of these. If you use it, correct the
 interface name inside it first.
@@ -139,6 +169,11 @@ understands is task 2, and there is no package for it. See `GO2-TASK2-DRIVE-SOL.
 "rosidl_generator_dds_idl"`:
 - that generator is not pulled in by `ros-jazzy-desktop` or `ros-base`. Install
   `ros-jazzy-rosidl-generator-dds-idl` and build again
+
+`colcon build` fails with `ModuleNotFoundError: No module named 'em'`:
+- CMake found `uv`'s Python in `~/.local/bin` instead of the system one. Look at the path in
+  the error - if it is not `/usr/bin/python3`, that is why. Rebuild with
+  `--cmake-args -DPython3_EXECUTABLE=/usr/bin/python3`
 
 Topics are listed but their types show as unknown:
 - the Unitree message packages are not built, or `install/setup.bash` is not sourced here
