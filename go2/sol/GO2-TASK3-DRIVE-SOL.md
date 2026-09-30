@@ -5,11 +5,9 @@ Every terminal needs the environment first - `source ~/go2env.sh`, or the block 
 
 Setup first: `GO2-TASK1-SETUP-SOL.md`. Remote in your hand, 2-3 m clear.
 
-
 #ATTENTION: the Go2 keeps executing the last velocity it was given. If your node stops
 sending, crashes, or its terminal closes, the dog keeps walking. `L2+B` on the remote is the
 stop that always works.
-
 
 ## Look before you build
 
@@ -70,15 +68,12 @@ node in the advanced part needs a watchdog.
 
 ## Why the command line works and teleop does not
 
-Have them try both before explaining anything. `ros2 topic pub` walks the dog;
-`teleop_twist_keyboard` does nothing at all. Same robot, same network, same terminal.
-
 The difference is the topic and the type:
 
-| | topic | type | who listens |
-|---|---|---|---|
-| `ros2 topic pub` | `/api/sport/request` | `unitree_api/msg/Request` | **the dog** |
-| `teleop_twist_keyboard` | `/cmd_vel` | `geometry_msgs/Twist` | nobody |
+|                           | topic                  | type                        | who listens       |
+| ------------------------- | ---------------------- | --------------------------- | ----------------- |
+| `ros2 topic pub`        | `/api/sport/request` | `unitree_api/msg/Request` | **the dog** |
+| `teleop_twist_keyboard` | `/cmd_vel`           | `geometry_msgs/Twist`     | nobody            |
 
 The dog has never heard of `/cmd_vel` and does not know what a `Twist` is. Nothing in ROS
 connects two topics by itself. So teleop publishes into a topic with no other end, and the
@@ -93,16 +88,9 @@ ros2 topic info /cmd_vel
 With teleop running and no bridge: `Publisher count: 1`, `Subscription count: 0`. That zero
 is the entire explanation, and it is the reason the next section exists.
 
-**This is the best five minutes in the lab** - do not skip past it to the code.
+## Write your own go2 bridge
 
-## The keyboard is a package, the bridge is yours
-
-```
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
-```
-
-Hold `i` / `,` to walk, `j` / `l` to turn, `k` to stop. It publishes `geometry_msgs/Twist` on
-`/cmd_vel` and nothing else. **A Go2 has no `/cmd_vel`**, so on its own this moves nothing.
+(there exists a solution but try it first to solve it on your own)
 
 **The bridge is a ROS node that subscribes to `/cmd_vel` and publishes to
 `/api/sport/request`.** That is the whole job: it is the only thing in the system that knows
@@ -117,11 +105,6 @@ teleop_twist_keyboard  ->  /cmd_vel  ->  your bridge  ->  /api/sport/request  ->
 
 Once it runs, `ros2 topic info /cmd_vel` shows `Subscription count: 1` - that subscriber is
 your node, and it is the link that was missing.
-
-**Start the bridge before teleop.** ROS discovery is dynamic, so the other order does connect
-eventually - but anything you press before the bridge exists is simply dropped, and "I held a
-key and nothing happened" tells you nothing about which part is wrong. Bridge first, check
-`ros2 topic info /cmd_vel` reads 1 and 1, then the keyboard.
 
 What you write is the node in between. It has to:
 
@@ -143,43 +126,44 @@ Look at the message first:
 ros2 interface show unitree_api/msg/Request
 ```
 
-## Dry run before the dog moves
+## Running the dog
 
-Remap the command topic so nothing reaches the robot:
+**Start the bridge before teleop.** ROS discovery is dynamic, so the other order does connect
+eventually  Bridge first, check`ros2 topic info /cmd_vel` reads 1 and 1, then the keyboard.
 
-```
-# a plain script
-python3 go2_bridge.py --ros-args -r /api/sport/request:=/dryrun
+### 1. Starting your node
 
-# or, if you built it as a package - e.g. package go2_cmd_vel_bridge, executable cmd_vel_bridge
-ros2 run go2_cmd_vel_bridge cmd_vel_bridge --ros-args -r /api/sport/request:=/dryrun
-```
+Two ways, depending on how you wrote it. Both need `source ~/go2env.sh` in that terminal
+first.
 
-Either is fine. A single file run with `python3` is the quickest way to get going; a package
-is what you want once there is more than one node. `--ros-args` works the same in both.
-
-For `ros2 run`, the two names are the **package** and the **executable** - the executable is
-whatever your `setup.py` lists under `console_scripts`, which is often not the file name. If
-`ros2 run` says it cannot find it, `ros2 pkg executables <package>` tells you what it is
-actually called.
-
-in a second terminal:
+**A single file** - quickest to get going:
 
 ```
-ros2 topic echo /dryrun
+python3 ~/repos/cas_26_YOUR_NAME/my_bridge.py
 ```
 
-Holding a key gives `api_id: 1008` repeatedly. Releasing it gives **nothing at first** -
-`teleop_twist_keyboard` sends only on a key press, so your node sees silence - and then one
-`api_id: 1003` once your watchdog fires, about a second later.
+**A package** - what you want once there is more than one node:
 
-That second of delay is the whole point of the task. The dog does not stop on its own; it
-stops because *your* node noticed the silence and said so. Get this visible in the dry run
-before the robot is involved.
+```
+ros2 run <your_package> <your_executable>
+```
 
-When that is right, drop the remap and run it for real.
+### 2. Starting Teleopartion
 
-## If nothing moves
+(this is a package you don't have to write it yourselfe)
+
+```
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+Hold `i` / `,` to walk, `j` / `l` to turn, `k` to stop. It publishes `geometry_msgs/Twist` on
+`/cmd_vel` and nothing else. **A Go2 has no `/cmd_vel`**, so on its own this moves nothing.
+
+The two names are the **package** and the **executable**, and the executable is whatever your
+`setup.py` lists under `console_scripts` - often not the file name. `ros2 pkg executables <your_package>` prints it. If `ros2 run` says the package is not found, you have not sourced
+the workspace you built it in.
+
+## ! If nothing moves
 
 **Ask the dog.** It answers every request, and the answer says whether it accepted it:
 
@@ -191,10 +175,10 @@ ros2 topic echo /api/sport/response
 the dog only publishes here when it has just answered a request. Leave it running in one
 terminal and send a command from another; the replies appear as you send.
 
-| `status.code` | meaning |
-|---|---|
-| `0` | accepted - if it still did not move, look at your parameters |
-| `-1` | **refused.** The message was fine; the robot declined it |
+| `status.code` | meaning                                                        |
+| --------------- | -------------------------------------------------------------- |
+| `0`           | accepted - if it still did not move, look at your parameters   |
+| `-1`          | **refused.** The message was fine; the robot declined it |
 
 A `-1` is a robot-state problem, not a code problem. In order:
 
@@ -238,10 +222,6 @@ your own version:
   retune it with `--ros-args -p max_vx:=0.5` instead of editing code
 
 The version below is the smallest thing that works, and is easier to read first.
-
-Verified on 30 Sep 2026 on a Jetson running Jazzy: holding a key produced 50 messages with
-`api_id: 1008`, releasing produced `api_id: 1003` from the watchdog, and Ctrl+C produced one
-more on the way out.
 
 ```python
 #!/usr/bin/env python3
@@ -320,27 +300,11 @@ if __name__ == '__main__':
     main()
 ```
 
-Run it:
-
-```
-python3 go2_bridge.py --ros-args -r /api/sport/request:=/dryrun   # safe, sends nothing
-python3 go2_bridge.py                                             # for real
-```
-
-(save the listing above as `go2_bridge.py`, or use the package version.)
-
-Three things in it worth understanding, because they are the task:
-
-- **the 10 Hz timer.** `teleop_twist_keyboard` sends only on a key press. Without the resend,
-  the dog gets one message and stops
-- **the 1 s staleness check.** This is what turns "no more messages" into StopMove. The dog
-  has no such timeout of its own
-- **`SignalHandlerOptions.NO`.** Without it, Ctrl+C tears down the ROS context *before* the
-  final StopMove is published, and the dog keeps walking. This one is not a style choice
 
 # Troubleshooting
 
 The bridge runs, teleop runs, the dog does not move:
+
 - does the bridge print or publish anything about a second after you tap `i`? If not, the
   keyboard is not reaching it - check `ros2 topic hz /cmd_vel`
 - is it still remapped to `/dryrun`? `ros2 node info <your_node>` shows what it publishes
@@ -349,8 +313,10 @@ The bridge runs, teleop runs, the dog does not move:
 - is a phone app connected? It takes priority
 
 The dog keeps walking after you stop your node:
+
 - your StopMove never went out. Ctrl+C tears down the ROS context by default, and a message
   published after that goes nowhere
 
 Nothing in `ros2 topic list`, or types show as unknown:
+
 - see `GO2-TASK1-SETUP-SOL.md`, the troubleshooting there covers it

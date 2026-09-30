@@ -14,7 +14,6 @@ working code exists and you will be handed it. Come with what you tried.
 | [`GO2-TASK3-DRIVE-SOL.md`](GO2-TASK3-DRIVE-SOL.md) | driving by hand, then the bridge node, the dry run, the modes |
 | [`GO2-TASK4-BAGS-SOL.md`](GO2-TASK4-BAGS-SOL.md) | record, replay, comparing the two |
 | [`GO2-TASK5-OBSTACLES-SOL.md`](GO2-TASK5-OBSTACLES-SOL.md) | the lidar, filtering, stopping in time |
-| [`GO2-REPOS-SOL.md`](GO2-REPOS-SOL.md) | what to pull, and what not to |
 
 ## How to approach each task
 

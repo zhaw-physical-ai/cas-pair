@@ -70,6 +70,8 @@ Basic:
 
 Advanced:
 - say which tool you would use for which job, and why they are not equivalent
+- find and try a tool nobody told you about - there are several, and some are far better at
+  one job than rviz is. [`LINKS.md`](LINKS.md) has a few starting points
 
 Hints:
 - a real Go2 publishes **no robot model and no transform tree**, so nothing will draw a dog

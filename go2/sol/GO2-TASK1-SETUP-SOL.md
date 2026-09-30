@@ -64,9 +64,7 @@ source install/setup.bash
 
 #ATTENTION: that `-DPython3_EXECUTABLE` is not optional on these machines. `uv` puts its own
 Python in `~/.local/bin`, ahead of the system one on your PATH. CMake picks it up, and it has
-none of ROS's Python dependencies - the build dies with `ModuleNotFoundError: No module named
-'em'`, which says nothing about the real cause. The flag tells CMake which Python to use.
-
+none of ROS's Python dependencies - the build dies with `ModuleNotFoundError: No module named 'em'`, which says nothing about the real cause. The flag tells CMake which Python to use.
 
 Check they are there:
 
@@ -174,47 +172,56 @@ profile, so it matches the dog's publishers by itself.
 
 Most of this lab is stock ROS. Only two things are yours to program:
 
-| pull | write |
-|---|---|
-| ROS 2 Jazzy, `teleop_twist_keyboard`, `rviz2`, `foxglove_bridge`, `rosbag2` | the bridge node: `geometry_msgs/Twist` -> `unitree_api/msg/Request` |
-| the Unitree message packages | the obstacle node: lidar -> stop or turn |
+| pull                                                                               | write                                                                  |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| ROS 2 Jazzy,`teleop_twist_keyboard`, `rviz2`, `foxglove_bridge`, `rosbag2` | the bridge node:`geometry_msgs/Twist` -> `unitree_api/msg/Request` |
+| the Unitree message packages                                                       | the obstacle node: lidar -> stop or turn                               |
 
-`teleop_twist_keyboard` is a package, not something you write:
+Everything in the left column is one `apt install` away. Everything in the right column is
+the lab. How the two meet is task 3 - see
+[`GO2-TASK3-DRIVE-SOL.md`](GO2-TASK3-DRIVE-SOL.md).
 
-```
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
-```
+## What you do not need
 
-It publishes `geometry_msgs/Twist` on `/cmd_vel`, and by itself it does nothing to the dog -
-**a Go2 has no `/cmd_vel`.** The node that turns those messages into something the robot
-understands is task 3, and there is no package for it. See `GO2-TASK3-DRIVE-SOL.md`.
+- **unitree_sdk2 / unitree_sdk2_python** - Unitree's own SDK, a second and non-ROS way to
+  drive the dog. It works; it is not what these tasks are about
+- **zenoh-bridge-ros2dds** - for reaching a dog from outside the lab network. Pointless when
+  your code runs on the Jetson cabled to the robot
+- **a Go2 simulation** - the simulation labs use a different setup entirely: it has
+  `/cmd_vel`, a robot model and a TF tree. A real Go2 has none of those, so instructions
+  written for it will mislead you
 
 # Troubleshooting
 
 `ros2 topic list` is empty or nearly empty:
+
 - the robot is not ready yet - wait, it takes longer than `ping` does
 - `RMW_IMPLEMENTATION` is not set in *this* terminal
 - `CYCLONEDDS_URI` is not pinning the interface, and CycloneDDS bound the wifi instead
 - a stale CLI daemon is answering - try `ros2 topic list --no-daemon`
 
-`colcon build` fails with `Could not find a package configuration file provided by
-"rosidl_generator_dds_idl"`:
+`colcon build` fails with `Could not find a package configuration file provided by "rosidl_generator_dds_idl"`:
+
 - that generator is not pulled in by `ros-jazzy-desktop` or `ros-base`. Install
   `ros-jazzy-rosidl-generator-dds-idl` and build again
 
 `YOUR_INTERFACE: does not match an available interface`, or
 `rmw_create_node: failed to create domain`:
+
 - `CYCLONEDDS_URI` still has a placeholder in it, or names a port that does not exist. Use the
   `IFACE=$(...)` form above. If `echo $IFACE` is empty, the dog's cable is not up - fix that
   first, no ROS command will work until it is
 
 `colcon build` fails with `ModuleNotFoundError: No module named 'em'`:
+
 - CMake found `uv`'s Python in `~/.local/bin` instead of the system one. Look at the path in
   the error - if it is not `/usr/bin/python3`, that is why. Rebuild with
   `--cmake-args -DPython3_EXECUTABLE=/usr/bin/python3`
 
 Topics are listed but their types show as unknown:
+
 - the Unitree message packages are not built, or `install/setup.bash` is not sourced here
 
 It worked, then went deaf after the cable was moved or the dog power-cycled:
+
 - CycloneDDS binds the interface at startup and does not recover. Restart your nodes.
