@@ -4,6 +4,9 @@ What to pull, and what each thing actually gives you.
 
 ## From apt
 
+#ATTENTION: a fresh Jetson has no ROS apt repository - add it first, or every line below
+fails with `Unable to locate package`. See `GO2-TASK1-SETUP-SOL.md`.
+
 ```
 sudo apt install -y ros-jazzy-desktop \
                     ros-jazzy-rmw-cyclonedds-cpp \
@@ -30,8 +33,12 @@ sudo apt install -y ros-jazzy-desktop \
 
 ```
 git clone https://github.com/unitreerobotics/unitree_ros2
-colcon build --packages-select unitree_go unitree_api unitree_hg
+colcon build --packages-select unitree_go unitree_api unitree_hg \
+  --cmake-args -DPython3_EXECUTABLE=/usr/bin/python3
 ```
+
+#ATTENTION: the `-DPython3_EXECUTABLE` flag is required - `uv`'s Python shadows the system
+one on these machines and the build fails with `No module named 'em'`.
 
 Build only those three packages. The rest of the repo is Foxy-era examples that will not
 build on Jazzy and that you do not need. Its README is written for Foxy - read `jazzy`
@@ -61,5 +68,5 @@ Both speak the same websocket, so the bridge above serves either.
   Go2 has none of those
 
 #ATTENTION: there are community packages that expose a Go2 as a normal ROS robot, with
-`/cmd_vel` and a URDF ready-made. If you find one and use it, you have skipped task 2 rather
+`/cmd_vel` and a URDF ready-made. If you find one and use it, you have skipped task 3 rather
 than done it. Write the bridge first; then look at how someone else solved the same problem.

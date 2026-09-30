@@ -28,9 +28,11 @@ separate: it is how you reach the Jetson. The robot link never leaves the cable.
 - **A remote control in your hand, always.** `L2+B` damps the dog and it lies down softly.
   This is your stop, not the software.
 - **2-3 m clear** around it, and nothing underneath.
-- **The dog only accepts movement commands in some of its modes.** Lying down, damping or
-  mid-transition it ignores them completely and looks broken. Its state is published - find
-  it, watch it, and check it before you conclude your code is wrong.
+- **The dog has to be woken up before it accepts anything.** Stand it up with the remote and
+  press `Start`. Until then every movement command is refused and nothing looks wrong.
+- **It also refuses commands in some of its states** - damping, or mid-transition - and looks
+  broken while doing it. The robot answers every request on `/api/sport/response`: `code: 0`
+  is accepted, `code: -1` is refused. Check that before you conclude your code is wrong.
 - **Silence is not a stop.** The Go2 keeps executing the last velocity it was given until
   something tells it otherwise. If your program stops sending, or crashes, or its terminal
   closes, the dog keeps going. Whatever you write, make it send a stop when it exits.
@@ -58,28 +60,13 @@ Hints:
   (https://github.com/unitreerobotics/unitree_ros2)
 - an empty topic list is usually you, not the robot
 
-## Task 2: Move the dog with ROS
-
-Basic:
-- move the robot from a node you wrote
-- stop it when you let go of the key
-
-Advanced:
-- accept a standard `geometry_msgs/Twist` so the same node could drive a simulation
-- cap the speeds in your own code, not just with your fingers
-
-Hints:
-- **there is no `/cmd_vel` on a Go2** - walking is a request on the dog's own API
-- find out what that request looks like before you write anything
-- test with the command topic remapped somewhere harmless first, and watch what you send
-- the dog keeps walking if your node dies - make sure it sends a stop on the way out
-
-## Task 3: Use the tools
+## Task 2: Use the tools
 
 Basic:
 - visualize the robot's data in rviz
 - try a second tool - Foxglove Studio or Lichtblick - and compare them
-- plot a value while the robot moves
+- show the lidar point cloud, and watch what happens when you stand in front of the robot
+- plot a value and watch it change
 
 Advanced:
 - say which tool you would use for which job, and why they are not equivalent
@@ -88,6 +75,40 @@ Hints:
 - a real Go2 publishes **no robot model and no transform tree**, so nothing will draw a dog
 - what it does publish is state, odometry and lidar
 - Foxglove and Lichtblick connect over a websocket bridge you have to run on the Jetson
+- in rviz, adding a display is not the same as switching it on - each one has a tick-box in
+  the Displays panel, and an unticked display draws nothing and says nothing
+- rviz has to anchor everything to one frame, and **nothing on this robot publishes
+  transforms** - check `ros2 topic info /tf` and look at the publisher count. Until you deal
+  with that, the Fixed Frame list is empty and nothing will draw
+- every message says which frame it is in: `ros2 topic echo <topic> --field header.frame_id`
+- a display that receives nothing and a display that is switched off look identical. So does
+  one asking for a reliability the publisher does not offer
+
+## Task 3: Move the dog with ROS
+
+Basic:
+- look around first: what nodes are running, what topics exist, what types do they carry
+- find the topic that makes the dog walk, and what a message on it has to contain
+- **move the dog from the command line**, before you write any code
+- stop it from the command line too
+- now try to drive it with `teleop_twist_keyboard` instead. It will not work.
+  **Work out why** - that answer is the whole task
+
+Advanced:
+- write a node that does the same thing, driven by `geometry_msgs/Twist` so a keyboard
+  teleop tool can steer it
+- make it stop when you let go of the key, and when the node exits
+- run teleop again with your node running, and explain what changed
+
+Hints:
+- `ros2 node list`, `ros2 topic list`, `ros2 topic info -v`, `ros2 interface show`
+- compare the two attempts with `ros2 topic info` on each topic involved: which one has a
+  publisher, which has a subscriber, and which has neither
+- **there is no `/cmd_vel` on a Go2** - walking is a request on the dog's own API
+- the dog refuses commands in some states, and says so on `/api/sport/response` -
+  `code: -1` means the message was fine and the robot declined it
+- **the dog keeps walking until something tells it to stop.** Whether you drive it by hand or
+  from a node, know how you will stop it *before* you start it
 
 ## Task 4: Record and replay
 
@@ -130,6 +151,7 @@ Hints:
 | topics exist, nothing moves | the dog is in a mode that ignores commands |
 | it worked, now it doesn't | something started before the robot, or before the cable - restart it |
 | a node sees nothing | wrong `ROS_DOMAIN_ID`, or a stale `ros2 daemon` - try `--no-daemon` |
+| `/api/sport/response` prints nothing | it only replies to requests - send one from another terminal |
 
 `ros2 topic list`, `ros2 topic echo`, `ros2 topic info -v` and `ros2 topic hz` will tell you
 which. Use them before changing code.
