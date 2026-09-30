@@ -125,7 +125,7 @@ source ~/go2env.sh
 It prints what it set, so you know straight away whether the terminal is usable:
 
 ```
-go2env: ros=jazzy  ws=/home/ema-student/repos/cas_26_johm/ros_ws  iface=enP8p1s0
+go2env: ros=jazzy  ws=/home/ema-student/repos/cas_26_YOUR_NAME/ros_ws  iface=enP8p1s0
 ```
 
 and it tells you when the dog's cable is down instead of letting you find out three commands

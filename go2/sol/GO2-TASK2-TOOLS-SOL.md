@@ -90,9 +90,15 @@ Over ssh it needs `export DISPLAY=:1` first, or it dies with a Qt error - an ssh
 no screen of its own.
 
 **Foxglove Studio / Lichtblick** - desktop apps, meant for *your laptop*, not the Jetson.
-Download from [foxglove.dev](https://foxglove.dev) or
-[Lichtblick releases](https://github.com/lichtblick-suite/lichtblick/releases). Lichtblick is
-the open-source fork and needs no account. Then, on the Jetson:
+
+#ATTENTION: **Foxglove wants an account.** You have to sign up and log in before it will do
+anything, which is a few minutes and an email address you may not want to give it.
+**[Lichtblick](https://github.com/lichtblick-suite/lichtblick/releases)** is the open-source
+fork of the same program, speaks the same protocol, and needs **no account at all** - start
+with that one unless you specifically want Foxglove.
+
+Download from [Lichtblick releases](https://github.com/lichtblick-suite/lichtblick/releases)
+or [foxglove.dev](https://foxglove.dev). Then, on the Jetson:
 
 ```
 source ~/go2env.sh
@@ -138,7 +144,7 @@ cd ~/repos/cas_26_YOUR_NAME/rosboard
 then `http://<jetson-address>:8888`. If it needs extra Python packages it will say so when
 you run it.
 
-More starting points in [`../LINKS.md`](../LINKS.md).
+More starting points in [`../../LINKS.md`](../../LINKS.md).
 
 ## Quick look at a single value, no GUI needed
 

@@ -20,6 +20,8 @@ already on it, and how to shut it down. Read this before either lab.
 Each folder has a task description, and a `sol/` folder with hints and commands for when you
 get stuck.
 
+[`LINKS.md`](LINKS.md) has the tools and upstream repositories both labs use.
+
 ## Where you work
 
 On the Jetson, in a folder of your own - the machines are shared:
