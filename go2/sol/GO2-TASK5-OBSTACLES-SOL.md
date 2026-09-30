@@ -1,6 +1,10 @@
 # Task 5: Avoid obstacles
 
-Task 2 first - this node steers through the one you already wrote.
+Every terminal needs the environment first - `source ~/go2env.sh`, or the block in
+`GO2-TASK1-SETUP-SOL.md`. A terminal without it shows empty topic lists and unknown types.
+
+Task 3 first - this node steers through the bridge you already wrote.
+
 
 #ATTENTION: a node that drives forward by itself is exactly the thing that walks into a wall
 while you are reading its output. Hand on the remote the first time, every time.
@@ -33,10 +37,10 @@ sudo apt install -y ros-jazzy-sensor-msgs-py
   threshold, inside a corridor left and right, above the floor
 - **the floor is also points.** Without a height filter the ground is a permanent obstacle
 - count them, do not trust one. A handful of points is noise; a wall is hundreds
-- publish `geometry_msgs/Twist` to `/cmd_vel` - your task 2 node turns that into robot
+- publish `geometry_msgs/Twist` to `/cmd_vel` - your task 3 node turns that into robot
   commands. Do not talk to `/api/sport/request` from here
 - start by stopping, then make it turn away instead
-- on exit, publish a zero Twist so the task 2 node sends StopMove
+- on exit, publish a zero Twist so the task 3 node sends StopMove
 
 ## Running it
 

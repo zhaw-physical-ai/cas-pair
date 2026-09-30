@@ -67,7 +67,6 @@ Python in `~/.local/bin`, ahead of the system one on your PATH. CMake picks it u
 none of ROS's Python dependencies - the build dies with `ModuleNotFoundError: No module named
 'em'`, which says nothing about the real cause. The flag tells CMake which Python to use.
 
-Verified on 29 Sep 2026: `Summary: 3 packages finished` in about a minute.
 
 Check they are there:
 
@@ -98,16 +97,41 @@ is **not** the same on every machine (a USB Ethernet adapter comes up as `enx...
 ip -br addr
 ```
 
-Then, in **every terminal** you work in. All four lines, every time - the machines are
+Then, in **every terminal** you work in. All of it, every time - the machines are
 shared, so do not put them in `~/.bashrc`:
 
 ```
 source /opt/ros/jazzy/setup.bash
 source ~/repos/cas_26_YOUR_NAME/ros_ws/install/setup.bash
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export CYCLONEDDS_URI='<CycloneDDS><Domain><General><Interfaces>
-  <NetworkInterface name="YOUR_INTERFACE"/></Interfaces></General></Domain></CycloneDDS>'
+
+IFACE=$(ip -o -4 addr show | awk '$4 ~ /^192\.168\.123\./ {print $2; exit}')
+export CYCLONEDDS_URI="<CycloneDDS><Domain><General><Interfaces><NetworkInterface name=\"$IFACE\"/></Interfaces></General></Domain></CycloneDDS>"
+echo "using interface: $IFACE"      # empty means the dog's cable is not up
 ```
+
+The `IFACE` line finds the port by its `192.168.123.x` address rather than by name, so this
+block is the same on every machine and works with a USB Ethernet adapter too. Copy it as it
+is - there is nothing in it to fill in.
+
+### Stop retyping it
+
+Once you understand what those lines do, put them in a file and source that instead. There is
+one ready in the repo - [`../go2env.sh`](../go2env.sh). Copy it to your home directory, set
+`WS` at the top to your own workspace, and every terminal becomes:
+
+```
+source ~/go2env.sh
+```
+
+It prints what it set, so you know straight away whether the terminal is usable:
+
+```
+go2env: ros=jazzy  ws=/home/ema-student/repos/cas_26_johm/ros_ws  iface=enP8p1s0
+```
+
+and it tells you when the dog's cable is down instead of letting you find out three commands
+later. Do **not** put any of this in `~/.bashrc` - the machines are shared.
 
 Forgetting the second line is the most common way to lose twenty minutes: the topics appear
 but their types show as unknown, because the Unitree messages live in that workspace.
@@ -138,6 +162,14 @@ ros2 topic echo /lf/sportmodestate --field mode
 A number that changes when you press buttons on the remote means you are talking to a real
 robot.
 
+Do not read too much into the number itself - on 30 Sep 2026 it stayed at `0` on a dog that
+was standing and walking on command. It tells you the dog is alive and publishing, which is
+all task 1 needs. Whether it will *accept* a command is answered by `/api/sport/response`.
+
+Verified end to end on 30 Sep 2026, orin-nano-1 cabled to a dog: topics present, mode readable.
+`ros2 topic echo` needs no QoS flag here - on Jazzy it defaults to a best-effort-compatible
+profile, so it matches the dog's publishers by itself.
+
 ## What you pull, and what you write
 
 Most of this lab is stock ROS. Only two things are yours to program:
@@ -155,7 +187,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 It publishes `geometry_msgs/Twist` on `/cmd_vel`, and by itself it does nothing to the dog -
 **a Go2 has no `/cmd_vel`.** The node that turns those messages into something the robot
-understands is task 2, and there is no package for it. See `GO2-TASK2-DRIVE-SOL.md`.
+understands is task 3, and there is no package for it. See `GO2-TASK3-DRIVE-SOL.md`.
 
 # Troubleshooting
 
@@ -169,6 +201,12 @@ understands is task 2, and there is no package for it. See `GO2-TASK2-DRIVE-SOL.
 "rosidl_generator_dds_idl"`:
 - that generator is not pulled in by `ros-jazzy-desktop` or `ros-base`. Install
   `ros-jazzy-rosidl-generator-dds-idl` and build again
+
+`YOUR_INTERFACE: does not match an available interface`, or
+`rmw_create_node: failed to create domain`:
+- `CYCLONEDDS_URI` still has a placeholder in it, or names a port that does not exist. Use the
+  `IFACE=$(...)` form above. If `echo $IFACE` is empty, the dog's cable is not up - fix that
+  first, no ROS command will work until it is
 
 `colcon build` fails with `ModuleNotFoundError: No module named 'em'`:
 - CMake found `uv`'s Python in `~/.local/bin` instead of the system one. Look at the path in

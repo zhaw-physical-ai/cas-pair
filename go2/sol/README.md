@@ -10,8 +10,8 @@ working code exists and you will be handed it. Come with what you tried.
 | file | covers |
 |---|---|
 | [`GO2-TASK1-SETUP-SOL.md`](GO2-TASK1-SETUP-SOL.md) | install ROS, build the Unitree messages, cable up, talk to the dog |
-| [`GO2-TASK2-DRIVE-SOL.md`](GO2-TASK2-DRIVE-SOL.md) | teleop, the bridge node, the dry run, the modes |
-| [`GO2-TASK3-TOOLS-SOL.md`](GO2-TASK3-TOOLS-SOL.md) | topics, rviz, Foxglove and Lichtblick |
+| [`GO2-TASK2-TOOLS-SOL.md`](GO2-TASK2-TOOLS-SOL.md) | topics, rviz, Foxglove and Lichtblick |
+| [`GO2-TASK3-DRIVE-SOL.md`](GO2-TASK3-DRIVE-SOL.md) | driving by hand, then the bridge node, the dry run, the modes |
 | [`GO2-TASK4-BAGS-SOL.md`](GO2-TASK4-BAGS-SOL.md) | record, replay, comparing the two |
 | [`GO2-TASK5-OBSTACLES-SOL.md`](GO2-TASK5-OBSTACLES-SOL.md) | the lidar, filtering, stopping in time |
 | [`GO2-REPOS-SOL.md`](GO2-REPOS-SOL.md) | what to pull, and what not to |
@@ -35,20 +35,34 @@ comes from debugging three things at once.
 A robot that answers `ping` is not a robot ready to talk ROS - its network comes up in
 seconds, its ROS topics take substantially longer. Wait before you conclude anything.
 
-### Task 2 - move the dog with ROS
+### Task 2 - use the tools
+
+Start from the data, not from the tool. List the topics, pick one number that changes when the
+robot moves, and get that number on screen. Then open a second tool and put the same number on
+screen there. The comparison is the task.
+
+The dog does not need to move for this - and it should not, that is task 3. Put the lidar
+point cloud on screen and walk in front of the robot instead: you see the cloud change, which
+is both the tool working and a preview of task 5.
+
+Do not spend an hour trying to make a 3D view draw a dog. A real Go2 publishes no model and no
+transform tree, so it never will - that is a fact about the robot, not a mistake you made.
+
+### Task 3 - move the dog with ROS
 
 The trap is assuming the interface. Look at what the dog actually offers before you write a
-line: `ros2 topic list`, then `ros2 topic info` and `ros2 interface show` on anything that
-sounds like a command.
+line: `ros2 node list`, `ros2 topic list`, then `ros2 topic info -v` and `ros2 interface show`
+on anything that sounds like a command.
 
-Then build it in this order:
+Then build up in this order:
 
-1. **Work out the message.** What exactly does a walk command look like? Read the interface
-   definition, not a tutorial for another robot.
-2. **Dry-run it.** Send your messages to a harmless topic and echo them. You should be able to
-   see, in plain text, that holding a key produces a stream of move commands and releasing it
-   produces one stop. Get this right before the dog is involved at all.
-3. **Then the robot.** Short commands, low speeds, remote in your hand.
+1. **Move it from the command line.** One `ros2 topic pub` is enough to make the dog walk. Do
+   that before writing any code - it teaches you the interface with nothing else in the way.
+2. **Learn the stop in the same breath.** When your publish command ends, the dog keeps
+   walking. Find the request that stops it, and have it ready before you start.
+3. **Then write the node**, and dry-run it: send your messages to a harmless topic and echo
+   them. Holding a key should produce a stream of move commands, releasing one stop.
+4. **Then the robot.** Short commands, low speeds, remote in your hand.
 
 Three things the robot will do to you:
 
@@ -57,15 +71,6 @@ Three things the robot will do to you:
 - **the keyboard tool only sends on a key press.** One message is not a walk
 - **silence is not a stop.** Whatever you write, make it stop the dog when it exits - and
   assume one day it will not exit cleanly
-
-### Task 3 - use the tools
-
-Start from the data, not from the tool. List the topics, pick one number that changes when the
-robot moves, and get that number on screen. Then open a second tool and put the same number on
-screen there. The comparison is the task.
-
-Do not spend an hour trying to make a 3D view draw a dog. A real Go2 publishes no model and no
-transform tree, so it never will - that is a fact about the robot, not a mistake you made.
 
 ### Task 4 - record and replay
 
@@ -94,5 +99,5 @@ Build it in layers and test each one without the robot moving:
 The floor is also points, and so are the dog's own legs. A filter that ignores height will
 find an obstacle everywhere.
 
-Drive through the node you wrote in task 2 rather than talking to the robot's API again. If
+Drive through the node you wrote in task 3 rather than talking to the robot's API again. If
 your layering is right this is a few lines; if it is wrong, you will notice here.

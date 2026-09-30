@@ -68,5 +68,5 @@ Both speak the same websocket, so the bridge above serves either.
   Go2 has none of those
 
 #ATTENTION: there are community packages that expose a Go2 as a normal ROS robot, with
-`/cmd_vel` and a URDF ready-made. If you find one and use it, you have skipped task 2 rather
+`/cmd_vel` and a URDF ready-made. If you find one and use it, you have skipped task 3 rather
 than done it. Write the bridge first; then look at how someone else solved the same problem.
