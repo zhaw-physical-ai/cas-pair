@@ -29,6 +29,10 @@ To see the lidar, and to check the tool is really working:
    ```
    ros2 topic echo /utlidar/cloud --field header.frame_id --once
    ```
+
+   It says `utlidar_lidar`. That is a *frame*, not the topic name - typing `utlidar/cloud`
+   into Fixed Frame gives `could not transform from utlidar_lidar to utlidar/cloud`.
+
 2. **Give rviz a frame to anchor to.** The dog publishes **no transforms at all** - `/tf` and
    `/tf_static` exist only because rviz subscribes to them, and `ros2 topic info /tf` shows
    `Publisher count: 0`. tf2 therefore knows no frames, the Fixed Frame dropdown is empty, and
@@ -131,8 +135,8 @@ cd ~/repos/cas_26_YOUR_NAME/rosboard
 ./run
 ```
 
-then `http://<jetson-address>:8888`. Not tested by us - if it needs Python packages it will
-say so.
+then `http://<jetson-address>:8888`. If it needs extra Python packages it will say so when
+you run it.
 
 More starting points in [`../LINKS.md`](../LINKS.md).
 

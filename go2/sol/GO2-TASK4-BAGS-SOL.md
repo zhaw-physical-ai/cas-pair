@@ -7,13 +7,8 @@ Every terminal needs the environment first - `source ~/go2env.sh`, or the block 
 ros2 bag record -o my_route /cmd_vel /utlidar/robot_odom /lf/sportmodestate
 ```
 
-
 Those three topics only. `/utlidar/cloud` is gigabytes a minute and a bag you cannot copy off
 the machine is not much use.
-
-Verified on 30 Sep 2026, orin-nano-1 on a real dog: a 34 s route recorded while driving with
-teleop came to 4.2 MiB - 82 `/cmd_vel`, 685 `/lf/sportmodestate`, 5123 `/utlidar/robot_odom`.
-Replaying it **drove the dog along the route again**, with nobody touching a key.
 
 ```
 ros2 bag info my_route
@@ -38,15 +33,13 @@ task is asking you to compare.
 Two things to look at:
 
 - the dog does not end up where it did the first time. That is the discussion, not a bug
-- **check the timestamps rather than assuming them.** The dog stamps its own messages, and
-  its clock is its own. On 23 Sep 2026 it was about 39 minutes off a Jetson; on 30 Sep 2026,
-  on orin-nano-1, it was within a couple of seconds. So it is not reliably wrong *or*
-  reliably right - measure it:
+- **check the timestamps rather than assuming them.** The dog stamps its own messages and its
+  clock is its own. Sometimes it agrees with the Jetson to within a second; sometimes it is
+  tens of minutes out. It is not reliably wrong *or* reliably right - measure it:
 
   ```
   date +%s
   ros2 topic echo /lf/sportmodestate --field stamp.sec --once
   ```
-
   If those differ by more than a second or two, commanded and measured motion will not line
   up on a shared time axis and a correct plot will look broken

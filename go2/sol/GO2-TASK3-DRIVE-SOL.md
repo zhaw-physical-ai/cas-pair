@@ -182,16 +182,15 @@ terminal and send a command from another; the replies appear as you send.
 
 A `-1` is a robot-state problem, not a code problem. In order:
 
-1. **Press `Start` on the remote.** On 30 Sep 2026 this was the difference between every Move
-   being refused with `-1` and the dog walking. Nothing in ROS shows you this is needed
+1. **Press `Start` on the remote.** This is often the difference between every Move being
+   refused with `-1` and the dog walking. Nothing in ROS shows you it is needed
 2. **Disconnect the phone app.** It takes priority over the API and everything gets refused
 3. **Check the remote is talking to this dog** - `ros2 topic echo /wirelesscontroller`, then
    press buttons and watch for values
 
-#ATTENTION: **do not trust the `mode` field.** It is tempting, and on 30 Sep 2026 it read `0`
-on a dog that was standing at `body_height: 0.31` and walking on command. Earlier notes claim
-`0 = idle` and `1 = balance stand`; that did not hold on this robot. `/api/sport/response` is
-the reliable signal - use it and ignore the number.
+#ATTENTION: **do not trust the `mode` field.** It is tempting, but it can read `0` on a dog
+that is standing and walking on command, so `0 = idle` and `1 = balance stand` are not safe to
+rely on. `/api/sport/response` is the reliable signal - use it and ignore the number.
 
 ## If you are stuck: a working node
 

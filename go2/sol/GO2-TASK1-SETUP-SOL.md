@@ -153,20 +153,6 @@ successful output contains, e.g.:
 /utlidar/robot_odom
 ```
 
-```
-ros2 topic echo /lf/sportmodestate --field mode
-```
-
-A number that changes when you press buttons on the remote means you are talking to a real
-robot.
-
-Do not read too much into the number itself - on 30 Sep 2026 it stayed at `0` on a dog that
-was standing and walking on command. It tells you the dog is alive and publishing, which is
-all task 1 needs. Whether it will *accept* a command is answered by `/api/sport/response`.
-
-Verified end to end on 30 Sep 2026, orin-nano-1 cabled to a dog: topics present, mode readable.
-`ros2 topic echo` needs no QoS flag here - on Jazzy it defaults to a best-effort-compatible
-profile, so it matches the dog's publishers by itself.
 
 ## What you pull, and what you write
 
