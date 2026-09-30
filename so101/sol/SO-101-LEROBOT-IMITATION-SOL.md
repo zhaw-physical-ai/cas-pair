@@ -204,7 +204,8 @@ tune parameters like batch size, workers, ....
 
 
 ## Training on Runpod
-TODO
+See [Runpod Registration](../SO-101-TASK-DESCRIPTION.md#runpod-registration)
+-go to Pods -> choose official template with Runpod pytorch with a RTX 5090 GPU
 
 # Troubleshooting
 Helpful troubleshooting tips:
