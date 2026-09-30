@@ -26,7 +26,7 @@ Basic:
 
 
 Advanced:
-- set up the moveit package with the moveit assistant
+- get the MoveIt package running to contro lthe robot
 
 
 Hints:
