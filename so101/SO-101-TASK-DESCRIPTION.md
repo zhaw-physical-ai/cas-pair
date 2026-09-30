@@ -2,6 +2,7 @@
 
 ## Task 1: Teleoperation and Imitation learning
 Basic:
+- register on runpod (see instructions below)
 - set up the two arms
 - connect with jetson
 - calibrate it
@@ -38,3 +39,11 @@ git clone https://github.com/ros-physical-ai/ros2_so_arm.git
 git clone https://github.com/JafarAbdi/feetech_ros2_driver.git
 
 ```
+
+# Runpod Registration
+Runpod gives you easy access to powerful GPU cloud servers and you pay per usage.​
+
+- Register an account here: [runpod sign up​](https://console.runpod.io/login)
+- Create a team account​
+- Add marco.betschart@zhaw.ch as team member as role "billing"​
+- He will give you credits within 1h​
