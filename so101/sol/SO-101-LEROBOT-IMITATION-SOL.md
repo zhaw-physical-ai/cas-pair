@@ -63,16 +63,6 @@ sudo usermod -aG dialout $USER
 newgrp dialout
 ```
 
-
-## Setup Motor ids and baudrate for leader and follower 
-thus should be already done with the shipped arms. If however something fails do this step.
-
-```
-lerobot-setup-motors \
-    --robot.type=so101_follower \
-    --robot.port=/dev/ttyACM0  # <- paste here the port found at previous step
-```
-
 ## Calibrate both arms
 see helping videos on https://huggingface.co/docs/lerobot/en/so101
 ```
@@ -197,23 +187,50 @@ sudo systemctl isolate multi-user.target
 ```
 
 to bring it up again
+```
 sudo systemctl set-default graphical.target
 sudo reboot
+```
 
-tune parameters like batch size, workers, ....
+tune parameters like batch size, workers, ... to get RAM usage down
 
 
 ## Training on Runpod
 See [Runpod Registration](../SO-101-TASK-DESCRIPTION.md#runpod-registration)
 -go to Pods -> choose official template with Runpod pytorch with a RTX 5090 GPU
 
+- jupyter notebook
+- to login into hugging face
+
+```
+!hf auth login --token hf_eOfPcb...
+```
+
+- to see hidden files (e.g. huggingface token, ...): 
+
+```
+ls -la /workspace/.cache
+```
+
+
+
 # Troubleshooting
 Helpful troubleshooting tips:
 https://docs.nvidia.com/learning/physical-ai/sim-to-real-so-101/latest/troubleshooting.html
 
 
-If you encounter build errors, you may need to install additional system dependencies: cmake, build-essential, and ffmpeg libs. To install these for Linux run:
+- If you encounter build errors, you may need to install additional system dependencies: cmake, build-essential, and ffmpeg libs. To install these for Linux run:
 
 ```
 sudo apt-get install cmake build-essential python3-dev pkg-config libavformat-dev libavcodec-dev libavdevi
+```
+
+
+- Setup Motor ids and baudrate for leader and follower 
+this should be already done with the shipped arms. If however something fails do this step.
+
+```
+lerobot-setup-motors \
+    --robot.type=so101_follower \
+    --robot.port=/dev/ttyACM0  # <- paste here the port found at previous step
 ```
