@@ -2,13 +2,14 @@
 
 ## Task 1: Teleoperation and Imitation learning
 Basic:
-- register on runpod (see instructions below)
 - set up the two arms
 - connect with jetson
 - calibrate it
 - teleoperate it with the lerobot library
 
+
 Advanced:
+- register on runpod (see instructions below)
 - collect data samples and push to hugging face
 - train a policy on runpod
 - run trained policy on arm
