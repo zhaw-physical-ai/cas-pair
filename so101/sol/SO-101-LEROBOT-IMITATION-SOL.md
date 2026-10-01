@@ -199,7 +199,7 @@ tune parameters like batch size, workers, ... to get RAM usage down
 See [Runpod Registration](../SO-101-TASK-DESCRIPTION.md#runpod-registration)
 -go to Pods -> choose official template with Runpod pytorch with a RTX 5090 GPU
 
-- jupyter notebook
+In jupyter notebook:
 - to login into hugging face
 
 ```
@@ -210,6 +210,24 @@ See [Runpod Registration](../SO-101-TASK-DESCRIPTION.md#runpod-registration)
 
 ```
 ls -la /workspace/.cache
+```
+
+```
+pip install 'lerobot[training]'
+```
+
+e.g.
+```
+!lerobot-train \
+  --dataset.repo_id=oregoncoast/record-test_20260924_140559 \
+  --policy.type=act \
+  --output_dir=outputs/train/hf_act_record5 \
+  --job_name=hf_act_training_job_5 \
+  --policy.device=cuda \
+  --wandb.enable=False \
+  --policy.repo_id=oregoncoast/hf_act_recordpolicy5 \
+  --batch_size=8 \
+  --steps=20000
 ```
 
 
