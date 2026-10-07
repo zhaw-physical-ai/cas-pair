@@ -152,7 +152,14 @@ lerobot-record \
     --dataset.streaming_encoding=true \
     --dataset.encoder_threads=2
 ```
+Hints:
+```
+While collecting the dataset you can control the process with your keyboard: Control the data recording flow using keyboard shortcuts:
 
+Press Right Arrow (→): Save episode and move to the next.
+Press Left Arrow (←): Delete current episode and retry.
+Press Escape (ESC): Stop, encode videos, and upload.
+```
 - Replay one episode of dataset:
 ```
 lerobot-replay \
@@ -200,11 +207,21 @@ See [Runpod Registration](../SO-101-TASK-DESCRIPTION.md#runpod-registration)
 -go to Pods -> choose official template with Runpod pytorch with a RTX 5090 GPU
 
 In jupyter notebook:
-- to login into hugging face
+```
+!git clone https://github.com/huggingface/lerobot.git
+!apt-get install ffmpeg
+!cd lerobot && pip install -e ".[train, dataset]"
+```
 
+- to login into hugging face
 ```
 !hf auth login --token hf_eOfPcb...
 ```
+
+import os
+import wandb
+%env WANDB_API_KEY=wandb_v1_... # generate yourself
+wandb.login(key=os.environ["WANDB_API_KEY"])
 
 - to see hidden files (e.g. huggingface token, ...): 
 
@@ -227,7 +244,7 @@ e.g.
   --wandb.enable=False \
   --policy.repo_id=oregoncoast/hf_act_recordpolicy5 \
   --batch_size=8 \
-  --steps=20000
+  --steps=100000
 ```
 
 
@@ -252,3 +269,9 @@ lerobot-setup-motors \
     --robot.type=so101_follower \
     --robot.port=/dev/ttyACM0  # <- paste here the port found at previous step
 ```
+
+```
+~ Motor model not found -> try to use a different usb port or check your power supply (unpkug/plug again)
+- check that yo ureally have only one motor conencted to the board when doing motor id setup
+```
+
