@@ -7,10 +7,26 @@ ROS 2 Jazzy desktop in your browser. No robot and no Jetson: it runs on a RunPod
 
 1. Open the template, logged in to your own RunPod account, and click **Configure Pod**:
    https://console.runpod.io/hub/template/sef84j4t7b?ref=vc5f9d3q
-2. On the deploy page, next to the template: **Set overrides** → change `PASSWD` from
-   `change-me` to your own password. Then deploy on any NVIDIA GPU. The first start takes a
-   few minutes.
-3. Under **Connect**, click **HTTP 8080** ("browser desktop"), then **Connect**.
+
+   Or search for `ros2-jazzy-summit-sim` when you deploy a pod:
+
+   ![Select the template](images/choose_template.png)
+
+2. On the deploy page, give the pod a name and click **Set overrides** next to the template:
+
+   ![Set overrides](images/override.png)
+
+   Change `PASSWD` from `change-me` to your own password, then **Set overrides**:
+
+   ![Change the password](images/change_pwd.png)
+
+   Deploy on any NVIDIA GPU. The first start takes a few minutes.
+
+3. Under **Connect**, wait for **Ready** next to Port 8080, click **browser desktop**, then
+   **Connect**:
+
+   ![Open the desktop](images/open_desktop.png)
+
 4. Log in with your password from step 2.
 
 Tip: in the noVNC side tab, ⚙ Settings → Scaling mode → **Remote resizing** makes the desktop
