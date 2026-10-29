@@ -5,9 +5,13 @@ ROS 2 Jazzy desktop in your browser. No robot and no Jetson: it runs on a RunPod
 
 ## Open the desktop
 
-1. Deploy a pod from the **summit-sim** template. The first start takes a few minutes.
-2. Under **Connect**, click **HTTP 8080** ("browser desktop"), then **Connect**.
-3. Log in with the class password.
+1. Open the template, logged in to your own RunPod account, and click **Configure Pod**:
+   https://console.runpod.io/hub/template/sef84j4t7b?ref=vc5f9d3q
+2. On the deploy page, next to the template: **Set overrides** → change `PASSWD` from
+   `change-me` to your own password. Then deploy on any NVIDIA GPU. The first start takes a
+   few minutes.
+3. Under **Connect**, click **HTTP 8080** ("browser desktop"), then **Connect**.
+4. Log in with your password from step 2.
 
 Tip: in the noVNC side tab, ⚙ Settings → Scaling mode → **Remote resizing** makes the desktop
 fill the browser window.
@@ -66,7 +70,8 @@ glxinfo -B | grep renderer
 | Image | `johnsmic/rap-pod:jazzy-8677293` (Summit code: icclab_summit_xl `jazzy`, 20 Oct 2026) |
 | Start command | see the header of [`runpod_start.sh`](runpod_start.sh) |
 | HTTP port | `8080` (noVNC) |
-| Environment | `PASSWD` = class password (noVNC login and the `ros` user's password) |
+| Visibility | public, so students deploy it from their own accounts |
+| Environment | `PASSWD` = `change-me`, a placeholder: anyone can read a public template's variables. Each student sets their own at deploy (noVNC login and the `ros` user's password). Keep the variable: without it the image falls back to its public default `mypasswd` |
 | Container disk | 30 GB |
 | Volume disk | 10 GB at `/home/ros/rap` |
 | GPU | NVIDIA only: the image stops without one |
