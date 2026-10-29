@@ -8,11 +8,10 @@ ROS 2 Jazzy desktop in your browser. No robot and no Jetson: it runs on a RunPod
 1. Open the template, logged in to your own RunPod account, and click **Configure Pod**:
    https://console.runpod.io/hub/template/sef84j4t7b?ref=vc5f9d3q
 
-   Or search for `ros2-jazzy-summit-sim` when you deploy a pod:
+   ![Configure Pod](images/configure_pod.png)
 
-   ![Select the template](images/choose_template.png)
-
-2. On the deploy page, give the pod a name and click **Set overrides** next to the template:
+2. On the deploy page, enter a **Pod name** with your name in it, e.g. `summit-anna`. Then click
+   **Set overrides** next to the template:
 
    ![Set overrides](images/override.png)
 
