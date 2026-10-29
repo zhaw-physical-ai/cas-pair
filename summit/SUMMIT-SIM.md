@@ -10,7 +10,7 @@ ROS 2 Jazzy desktop in your browser. No robot and no Jetson: it runs on a RunPod
 
    ![Configure Pod](images/configure_pod.png)
 
-2. On the deploy page, enter a **Pod name** with your name in it, e.g. `summit-anna`. Then click
+2. On the deploy page, enter a **Pod name** with your name in it, e.g. `summit-your-name`. Then click
    **Set overrides** next to the template:
 
    ![Set overrides](images/override.png)
@@ -19,14 +19,31 @@ ROS 2 Jazzy desktop in your browser. No robot and no Jetson: it runs on a RunPod
 
    ![Change the password](images/change_pwd.png)
 
-   Deploy on any NVIDIA GPU. The first start takes a few minutes.
+3. Further down, choose a GPU. Any available NVIDIA card works; the RTX PRO 4500 SE is
+   tested. On the right, check the cost per hour: you pay for every minute the pod runs.
 
-3. Under **Connect**, wait for **Ready** next to Port 8080, click **browser desktop**, then
+   ![Choose a GPU and check the cost](images/choose_gpu.png)
+
+4. To keep your files: under **Storage**, click **Add volume**:
+
+   ![Add a volume](images/add_volume.png)
+
+   In the list that opens, click **Create volume**. Choose **Volume disk**, 10 GB, then
+   **Add volume disk**. It mounts to `~/rap`. Without it nothing in the pod is kept.
+
+   ![Volume disk](images/add_volume_2.png)
+
+5. On the right, check that the breakdown now lists a **Volume disk cost**, then click
+   **Deploy Pod**. The first start takes a few minutes.
+
+   ![Deploy](images/deploy.png)
+
+6. Under **Connect**, wait for **Ready** next to Port 8080, click **browser desktop**, then
    **Connect**:
 
    ![Open the desktop](images/open_desktop.png)
 
-4. Log in with your password from step 2.
+7. Log in with your password from step 2.
 
 Tip: in the noVNC side tab, ⚙ Settings → Scaling mode → **Remote resizing** makes the desktop
 fill the browser window.
@@ -62,10 +79,14 @@ Stop a launch with `Ctrl+C` in its terminal.
 
 ## Your files
 
-Only `~/rap` is kept. Everything else is reset when the pod stops.
+Only `~/rap` is kept, and only if you added a volume in step 4. Everything else is reset when
+the pod stops.
 
-Use **Stop**, not **Terminate**: Terminate deletes the pod and your files with it. A stopped
-pod still costs a little for its disk.
+Use **Stop**, not **Terminate**: the volume disk belongs to the pod, and Terminate deletes both.
+A stopped pod costs only its disk (about $2 per month for 10 GB). Start it again from
+**Pods** next time.
+
+Push your work to your own git repo as well: that is the copy that survives everything.
 
 ## If Gazebo is slow
 
@@ -88,7 +109,7 @@ glxinfo -B | grep renderer
 | Visibility | public, so students deploy it from their own accounts |
 | Environment | `PASSWD` = `change-me`, a placeholder: anyone can read a public template's variables. Each student sets their own at deploy (noVNC login and the `ros` user's password). Keep the variable: without it the image falls back to its public default `mypasswd` |
 | Container disk | 30 GB |
-| Volume disk | 10 GB at `/home/ros/rap` |
+| Volume disk | 10 GB at `/home/ros/rap`. Deploying from the share link does not create it: each student adds it in step 4 |
 | GPU | NVIDIA only: the image stops without one |
 
 No ssh and no Zenoh: the pod cannot reach a real robot. The arm uses MoveIt's KDL solver.
