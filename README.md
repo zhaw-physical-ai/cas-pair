@@ -5,7 +5,8 @@ a Unitree Go2 quadruped, and an SO-101 arm pair.
 
 ## Start here
 
-Every lab runs on a Jetson Orin Nano with a screen, keyboard and mouse - one per group.
+The robot labs run on a Jetson Orin Nano with a screen, keyboard and mouse - one per group.
+The Summit simulation runs in your browser on RunPod instead; see [`summit/`](summit/).
 
 **[`JETSONS-SETUP.md`](JETSONS-SETUP.md)** - which machine is yours, how to reach it, what is
 already on it, and how to shut it down. Read this before either lab.
@@ -16,6 +17,7 @@ already on it, and how to shut it down. Read this before either lab.
 |---|---|
 | **[`go2/`](go2/)** | the quadruped: drive it from your own code, visualize it, record it, avoid obstacles |
 | **[`so101/`](so101/)** | the arm pair: teleoperation, imitation learning, and ROS control |
+| **[`summit/`](summit/)** | the Summit XL mobile manipulator in simulation: Gazebo, Nav2 and MoveIt in the browser |
 
 Each folder has a task description, and a `sol/` folder with hints and commands for when you
 get stuck.
