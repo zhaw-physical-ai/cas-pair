@@ -25,12 +25,15 @@ use the phyphox fallback at the bottom of the page.
 ## Task 1: Baseline
 Basic:
 - load the pooled data, then plot a few takes per gesture and per person
-- train a logistic regression or a random forest on `features(X)`
+- train a logistic regression and a random forest on `features(X)`, and a k-nearest-neighbor
+  classifier (kNN) on the standardized features
 
 ## Task 2: Split matters
 Basic:
 - **first write down your guess** of the accuracy for both splits
 - compare a random train/test split with leave-one-person-out (group by person)
+- for each test take, find whose recording its nearest neighbor is. How often is it the same
+  person, under each split?
 - explain the gap
 
 ## Task 3: How much data
@@ -41,6 +44,10 @@ Basic:
 
 ## Task 4: Neural nets
 Basic:
+- before the neural nets, kNN as a reference:
+  - sweep k (1, 3, 5, 15, 50) and plot train vs validation accuracy
+  - compare unscaled vs standardized features
+  - compare kNN on the raw window (Euclidean) with kNN on the features
 - train an MLP on the raw window, then a 1D CNN
 - plot train and validation loss
 - make the model overfit on purpose
@@ -56,7 +63,7 @@ Basic:
   size?
 - **LLM zero-shot / few-shot:** send the signal as text (downsampled, rounded) to an LLM and ask
   for the gesture. Then add a few labeled examples to the prompt. Compare accuracy and latency
-  with your CNN.
+  with your CNN, and with kNN given the same few examples per class.
 - **VLM:** plot the window as an image and ask a vision-language model to classify it.
 
 ## Report

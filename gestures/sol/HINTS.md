@@ -8,6 +8,8 @@ these hints say.
   `StandardScaler` first; a random forest does not.
 - Plot: `plt.plot(np.arange(100) / 50, X[i])`, one subplot per gesture, a few takes each. Look
   for takes that are flat, clipped, or plainly a different gesture.
+- kNN: `make_pipeline(StandardScaler(), KNeighborsClassifier(5))`. Without the scaler, the
+  acceleration features (energy ~100) swamp the gyro features (~0.1) in the distance.
 - `sklearn.metrics.ConfusionMatrixDisplay`: which gestures get confused? If left/right or
   up/down get mixed up: a left move speeds up to the left, then brakes to the right. Which of the
   30 features know what came first?
@@ -16,6 +18,8 @@ these hints say.
 - Random split: `train_test_split(..., stratify=y)`.
 - Per person: `LeaveOneGroupOut()` or `GroupKFold(n_splits=5)` with `groups=person`, passed to
   `cross_val_score`.
+- Whose neighbor? `NearestNeighbors(n_neighbors=1).fit(F_train)`, then `.kneighbors(F_test)` gives
+  indices into the training set; compare `person[train][idx]` with `person[test]`.
 - Why the gap? The same person's takes are similar: same grip, speed and phone. A random split
   puts some of each person's takes in the test set, so the model can recognize the person
   instead of the gesture.
