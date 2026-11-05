@@ -189,6 +189,14 @@ if __name__ == "__main__":
     hz = np.array([m["raw_hz"] for m in meta])
     if len(hz):
         print(f"raw sample rates: min {hz.min():.0f}, median {np.median(hz):.0f}, max {hz.max():.0f} Hz")
-        g = np.linalg.norm(X[:, :, :3], axis=2).mean(1)[np.array(y) == "idle"]
+        idle = y == "idle"
+        g = np.linalg.norm(X[:, :, :3], axis=2).mean(1)[idle]
         if len(g):
             print(f"|acc| on idle takes: median {np.median(g):.2f} m/s^2 (should be ~9.8)")
+            # gravity direction per platform: should agree (upright: y ~ +9.8, flat: z ~ +9.8)
+            for label, src, ios in [("web android", "web", False), ("web iOS", "web", True),
+                                    ("phyphox", "phyphox", False)]:
+                m = np.array([mt["source"] == src and mt["ios"] == ios for mt in meta]) & idle
+                if m.any():
+                    print(f"  idle mean acc x,y,z {label:<12} {np.round(X[m, :, :3].mean((0, 1)), 1)}"
+                          f"  ({m.sum()} takes)")
