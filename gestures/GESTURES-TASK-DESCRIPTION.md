@@ -48,6 +48,9 @@ Basic:
   - sweep k (1, 3, 5, 15, 50) and plot train vs validation accuracy
   - compare unscaled vs standardized features
   - compare kNN on the raw window (Euclidean) with kNN on the features
+  - try other distances: Manhattan, cosine, one that ignores how the phone is held (only |acc|
+    and |gyro|), dynamic time warping (DTW: tolerates different speeds), and a learned one
+    (NCA). Which fits gestures best, and why?
 - train an MLP on the raw window, then a 1D CNN
 - plot train and validation loss
 - make the model overfit on purpose

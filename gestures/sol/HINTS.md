@@ -52,6 +52,16 @@ these hints say.
     `scipy.spatial.transform.Rotation.random()` or a small random angle about a random axis.
     This simulates a different grip.
 
+## Task 4: kNN distances
+- `KNeighborsClassifier(metric="manhattan")`, also `"cosine"` and `"chebyshev"`. Standardize first.
+- Ignore the grip: per time step, `np.linalg.norm(X[..., :3], axis=-1)` and the same for gyro.
+  Rotating the phone does not change these two numbers.
+- DTW: lets one take run faster or slower than the other. Downsample to 25 Hz (`X[:, ::2]`) and
+  limit the warp to ±10 steps (a Sakoe-Chiba band), or it is slow. `tslearn.metrics.cdist_dtw`
+  computes it; then `KNeighborsClassifier(metric="precomputed")`. With a band of 0, DTW is the
+  Euclidean distance.
+- Learned: `make_pipeline(StandardScaler(), NeighborhoodComponentsAnalysis(), KNeighborsClassifier())`.
+
 ## Task 5: Label noise
 - Flip only the **training** labels: pick a random 10% of the indices and give each one a
   random *other* class. The test labels stay clean.
