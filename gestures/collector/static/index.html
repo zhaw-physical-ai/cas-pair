@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>Gesture recorder</title>
 <style>
@@ -40,7 +41,7 @@
 <h1>Gesture recorder</h1>
 <div id="warn"></div>
 
-<label>Your name (same every time)</label>
+<label>Your name (same every time; a nickname is fine)</label>
 <input id="person" autocomplete="name" placeholder="first name + initial">
 <div id="tokrow"><label>Class token</label><input id="token" autocapitalize="off" autocomplete="off"></div>
 
@@ -53,6 +54,8 @@
 <div class="row">
   <button class="small" id="del">Delete my last take</button>
 </div>
+
+<p class="mut">Your recordings and the name you enter are shared with the whole class for this lab.</p>
 
 <details id="fallback">
   <summary>Sensors not working? Use phyphox</summary>

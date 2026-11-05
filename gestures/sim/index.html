@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SO-101 gesture sim</title>
+<link rel="icon" href="data:,">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.178.0/examples/jsm/",
+    "mujoco": "https://cdn.jsdelivr.net/npm/@mujoco/mujoco@3.17.0/mujoco.js"
+  }
+}
+</script>
+<style>
+  :root { --fg: #1d2530; --panel: rgba(255,255,255,.85); --accent: #2b6cb0; --ok: #2f855a; --bad: #c53030; --wait: #b7791f; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #dde4ec; color: var(--fg);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #view { position: fixed; inset: 0; }
+  #view canvas { display: block; touch-action: none; }
+  .panel { position: fixed; background: var(--panel); border-radius: 8px; padding: 10px 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  #info { top: 12px; left: 12px; max-width: calc(100vw - 48px); }
+  #info h1 { font-size: 15px; margin: 0 0 4px; }
+  #status { font-size: 12px; }
+  #status.ok { color: var(--ok); } #status.bad { color: var(--bad); } #status.wait { color: var(--wait); }
+  #last { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+  #label { font-size: 26px; font-weight: 600; min-width: 4ch; }
+  #prob, #age, #source { font-size: 12px; color: #4a5568; }
+  #goal { font-size: 12px; margin-top: 4px; color: #4a5568; }
+  #goal.done { color: var(--ok); font-weight: 600; }
+  #pad { bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; flex-wrap: wrap; gap: 6px;
+    justify-content: center; max-width: calc(100vw - 48px); }
+  #pad button { font: inherit; padding: 8px 12px; min-width: 64px; border: 1px solid #a0aec0; border-radius: 6px;
+    background: #fff; cursor: pointer; }
+  #pad button:hover { border-color: var(--accent); }
+  #pad button.hit { background: var(--accent); color: #fff; }
+  #help { font-size: 12px; color: #4a5568; flex-basis: 100%; text-align: center; }
+  #loading { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  #loading.error { color: var(--bad); }
+  @media (max-width: 600px) {
+    #info { padding: 6px 10px; } #label { font-size: 20px; }
+    #pad { width: calc(100vw - 48px); padding: 8px; }
+    #pad button { min-width: 0; flex: 1 1 28%; padding: 8px 4px; }
+    #help { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div id="info" class="panel">
+  <h1>SO-101 gesture sim</h1>
+  <div id="status"></div>
+  <div id="last"><span id="label">-</span><span id="prob"></span><span id="source"></span><span id="age"></span></div>
+  <div id="goal"></div>
+</div>
+<div id="pad" class="panel">
+  <button data-label="left">&larr; left</button>
+  <button data-label="right">right &rarr;</button>
+  <button data-label="up">&uarr; up</button>
+  <button data-label="down">&darr; down</button>
+  <button data-label="circle">&#x21bb; circle</button>
+  <button data-label="idle">idle</button>
+  <button id="reset">reset</button>
+  <div id="help">keys: arrows, c = circle, r = reset &middot; drag to orbit, scroll to zoom</div>
+</div>
+<div id="loading" class="panel">loading ...</div>
+<script type="module" src="sim.js"></script>
+</body>
+</html>

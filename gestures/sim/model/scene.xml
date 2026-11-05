@@ -1,0 +1,29 @@
+<!-- SO-101 on a table, with a cube to push into the green target square.
+     Arm: so101.xml from MuJoCo Menagerie (robotstudio_so101), unchanged. -->
+<mujoco model="so101 gesture scene">
+  <include file="so101.xml"/>
+
+  <statistic center="0.12 0 0.08" extent="0.6"/>
+
+  <worldbody>
+    <light pos="0.3 0.3 1.5" dir="-0.2 -0.2 -1" directional="true"/>
+
+    <!-- table: top surface at z = 0, the arm base stands on it -->
+    <geom name="table" type="box" size="0.40 0.45 0.015" pos="0.12 0 -0.015" rgba="0.62 0.47 0.32 1"/>
+    <geom name="leg1" type="box" size="0.02 0.02 0.36" pos="-0.24  0.41 -0.39" rgba="0.3 0.3 0.3 1" contype="0" conaffinity="0"/>
+    <geom name="leg2" type="box" size="0.02 0.02 0.36" pos="-0.24 -0.41 -0.39" rgba="0.3 0.3 0.3 1" contype="0" conaffinity="0"/>
+    <geom name="leg3" type="box" size="0.02 0.02 0.36" pos=" 0.48  0.41 -0.39" rgba="0.3 0.3 0.3 1" contype="0" conaffinity="0"/>
+    <geom name="leg4" type="box" size="0.02 0.02 0.36" pos=" 0.48 -0.41 -0.39" rgba="0.3 0.3 0.3 1" contype="0" conaffinity="0"/>
+    <geom name="floor" type="plane" size="0 0 0.05" pos="0 0 -0.75" rgba="0.8 0.8 0.82 1"/>
+
+    <!-- goal: push the cube into this square (visual only, no collision) -->
+    <geom name="target" type="box" size="0.03 0.03 0.0005" pos="0.139 -0.173 0.0005" euler="0 0 -1.047"
+      rgba="0.2 0.8 0.3 0.6" contype="0" conaffinity="0" group="1"/>
+
+    <!-- 3 cm cube, 27 g -->
+    <body name="cube" pos="0.196 -0.091 0.015">
+      <freejoint name="cube"/>
+      <geom name="cube" type="box" size="0.015 0.015 0.015" mass="0.027" rgba="0.85 0.2 0.15 1" friction="0.8 0.01 0.001"/>
+    </body>
+  </worldbody>
+</mujoco>

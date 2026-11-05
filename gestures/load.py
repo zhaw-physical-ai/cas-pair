@@ -32,7 +32,11 @@ DEG = np.pi / 180
 
 # ---------- reading the export ----------
 def _read_records(src):
-    """Yield (name, dict) for every take in a URL, a zip file, or a folder of .json files."""
+    """Yield (name, dict) for every take in a URL, a zip file, a folder or a list of .json files."""
+    if isinstance(src, (list, tuple)):
+        for p in src:
+            yield Path(p).name, json.loads(Path(p).read_text())
+        return
     src = str(src)
     if src.startswith(("http://", "https://")):
         req = urllib.request.Request(src, headers={"User-Agent": "gestures-load"})
@@ -143,7 +147,8 @@ def _window(v, T):
 def load(src, window_s=2.0, fs=50, return_meta=False, verbose=True):
     """Return X (N, T, 6) float32, y (N,) gesture names, person (N,) names.
 
-    src: export URL ("https://.../api/export?t=TOKEN"), a downloaded zip, or a folder of .json.
+    src: export URL ("https://.../api/export?t=TOKEN"), a downloaded zip, a folder of .json,
+    or a list of .json paths.
     return_meta=True also returns a list of dicts (id, source, ios, raw sample rate).
     """
     T = int(round(window_s * fs))

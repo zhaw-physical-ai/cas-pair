@@ -72,16 +72,16 @@ def takes():
     return sorted(DATA_DIR.glob("*.json"))
 
 
-_counts_cache: dict = {"key": None, "data": {}}
+_index_cache: dict = {"key": None, "data": []}
 
 
-def counts() -> dict:
-    """{person: {gesture: n}} - reads only the small header of each file; cached."""
+def take_index() -> list:
+    """[(path, person, gesture)] - reads only the small header of each file; cached."""
     files = takes()
     key = (len(files), files[-1].name if files else "")
-    if _counts_cache["key"] == key:
-        return _counts_cache["data"]
-    out: dict = {}
+    if _index_cache["key"] == key:
+        return _index_cache["data"]
+    out = []
     for p in files:
         try:
             with p.open() as f:
@@ -90,15 +90,59 @@ def counts() -> dict:
             gesture = re.search(r'"gesture":"(\w+)"', head).group(1)
         except Exception:
             continue
-        out.setdefault(person, {g: 0 for g in GESTURES})[gesture] += 1
-    _counts_cache.update(key=key, data=out)
+        out.append((p, person, gesture))
+    _index_cache.update(key=key, data=out)
     return out
+
+
+def counts() -> dict:
+    """{person: {gesture: n}}"""
+    out: dict = {}
+    for _, person, gesture in take_index():
+        out.setdefault(person, {g: 0 for g in GESTURES})[gesture] += 1
+    return out
+
+
+HOLDOUT_FILE = DATA_DIR / "holdout.txt"
+
+
+def holdout_people() -> set:
+    """People whose takes are hidden from the export and used to score uploaded models.
+    One name per line in DATA_DIR/holdout.txt, exactly as typed on the phone."""
+    if not HOLDOUT_FILE.exists():
+        return set()
+    return {ln.strip() for ln in HOLDOUT_FILE.read_text().splitlines()
+            if ln.strip() and not ln.startswith("#")}
 
 
 # ---------- phone page ----------
 @app.get("/")
 def index():
     return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/pages", response_class=HTMLResponse)
+def pages(request: Request, t: str = ""):
+    """Overview of every page, for trying things out. Phone pages need HTTPS (motion sensors)."""
+    q = f"?t={html.escape(t)}" if t else ""
+    rows = [
+        ("Phone", f"./{q}", "record gestures (needs HTTPS)"),
+        ("Phone", f"live{q}", "run an uploaded model live, send gestures to the sim (needs HTTPS)"),
+        ("Laptop", "sim/?channel=me", "SO-101 sim; ?channel= must match the live page; keys: arrows, c, r"),
+        ("Laptop", f"upload{q}", "upload an ONNX model, see its hold-out score"),
+        ("Projector", "dashboard", "takes per person and gesture, QR of the phone link"),
+        ("Projector", "leaderboard", "best model per team on the hidden people"),
+        ("Data", f"api/export{q}", "zip of all takes (without hold-out people)"),
+    ]
+    body = "".join(f"<tr><td>{w}</td><td><a href='{u}'>{html.escape(u.split('?')[0] or '/')}</a></td>"
+                   f"<td>{d}</td></tr>" for w, u, d in rows)
+    https = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"
+    note = "" if https else "<p><b>Plain HTTP:</b> phone motion sensors only work over HTTPS.</p>"
+    return f"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,"><title>Gestures: pages</title>
+<style>body{{font-family:system-ui,sans-serif;margin:16px;max-width:760px}} td{{padding:6px 10px;border-bottom:1px solid #ddd}}
+table{{border-collapse:collapse}} a{{font-weight:600}}</style>
+<h2>Gestures lab: pages</h2>{note}<table>{body}</table>"""
 
 
 @app.get("/healthz")
@@ -210,14 +254,20 @@ _export_cache: dict = {"key": None, "data": b""}
 
 @app.get("/api/export")
 def export(t: str = ""):
+    """All takes except the hold-out people's, without the browser user agent."""
     check_token(t)
-    files = takes()
-    key = (len(files), files[-1].stat().st_mtime_ns if files else 0, files[-1].name if files else "")
+    hold = holdout_people()
+    files = [p for p, person, _ in take_index() if person not in hold]
+    key = (len(files), files[-1].name if files else "", tuple(sorted(hold)))
     if _export_cache["key"] != key:
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
             for p in files:
-                z.write(p, f"gestures/{p.name}")
+                d = json.loads(p.read_text())
+                if d.get("source") == "web":
+                    d["ios"] = gload._is_ios(d)     # decided from the UA, which is dropped next
+                d.pop("ua", None)
+                z.writestr(f"gestures/{p.name}", json.dumps(d, separators=(",", ":")))
         _export_cache.update(key=key, data=buf.getvalue())
     return Response(_export_cache["data"], media_type="application/zip",
                     headers={"Content-Disposition": "attachment; filename=gestures.zip"})
@@ -237,16 +287,18 @@ def dashboard(request: Request):
     phone_url = f"{public_base(request)}/?t={TOKEN}"
     qr = segno.make(phone_url, error="m").svg_inline(scale=8, dark="#000", light="#fff")
     c = counts()
+    hold = holdout_people()
     rows = []
     tot = {g: 0 for g in GESTURES}
-    for person in sorted(c, key=str.lower):
+    for person in sorted(c, key=lambda p: (p in hold, p.lower())):
         cells = []
         for g in GESTURES:
             n = c[person][g]
             tot[g] += n
             cls = "ok" if n >= TARGET_REPS else ("some" if n else "none")
             cells.append(f'<td class="{cls}">{n}</td>')
-        rows.append(f"<tr><th>{html.escape(person)}</th>{''.join(cells)}<td>{sum(c[person].values())}</td></tr>")
+        tag = ' <small>(hold-out)</small>' if person in hold else ""
+        rows.append(f"<tr><th>{html.escape(person)}{tag}</th>{''.join(cells)}<td>{sum(c[person].values())}</td></tr>")
     head = "".join(f"<th>{g}</th>" for g in GESTURES)
     totals = "".join(f"<td>{tot[g]}</td>" for g in GESTURES)
     return f"""<!doctype html><html><head><meta charset="utf-8">
@@ -265,3 +317,220 @@ tfoot td{{font-weight:bold}} .url{{font-size:22px;word-break:break-all;max-width
 <tbody>{''.join(rows)}</tbody>
 <tfoot><tr><td>total</td>{totals}<td>{sum(tot.values())}</td></tr></tfoot></table></div>
 </div></body></html>"""
+
+
+# ---------- models: ONNX upload, hold-out scoring, leaderboard ----------
+import asyncio  # noqa: E402
+import subprocess  # noqa: E402
+import sys  # noqa: E402
+
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import load as gload  # noqa: E402  (the student load.py: same preprocessing for scoring)
+
+MODELS = DATA_DIR / "models"
+MODELS.mkdir(exist_ok=True)
+MAX_MODEL = 20_000_000
+
+
+def holdout_npz() -> Path | None:
+    """Hold-out takes preprocessed exactly like load.py; rebuilt when they change."""
+    hold = holdout_people()
+    files = [p for p, person, _ in take_index() if person in hold]
+    if not files:
+        return None
+    key = f"{len(files)}-{files[-1].name}-{'|'.join(sorted(hold))}"
+    path = MODELS / "holdout.npz"
+    keyfile = MODELS / "holdout.key"
+    if not path.exists() or not keyfile.exists() or keyfile.read_text() != key:
+        X, y, _ = gload.load(files, verbose=False)
+        np = gload.np
+        np.savez(path, X=X, y=np.array([GESTURES.index(g) for g in y]))
+        keyfile.write_text(key)
+    return path
+
+
+def check_npz() -> Path | None:
+    """A few class takes, only to check that an uploaded model runs (no score: they may be training data)."""
+    files = [p for p, _, _ in take_index()][:12]
+    if not files:
+        return None
+    path = MODELS / "check.npz"
+    if not path.exists():
+        X, y, _ = gload.load(files, verbose=False)
+        gload.np.savez(path, X=X, y=gload.np.array([GESTURES.index(g) for g in y]))
+    return path
+
+
+def score_model(mid: str) -> dict:
+    """Score on the hold-out people if there are any; otherwise only check that the model runs."""
+    meta_path = MODELS / f"{mid}.json"
+    meta = json.loads(meta_path.read_text())
+    hp = holdout_npz()
+    check_only = hp is None
+    if check_only:
+        hp = check_npz()
+    if hp is None:
+        meta["score"] = {"error": "no takes on the server yet to check the model with"}
+    else:
+        try:
+            r = subprocess.run([sys.executable, str(Path(__file__).parent / "score.py"),
+                                str(MODELS / f"{mid}.onnx"), str(hp)],
+                               capture_output=True, text=True, timeout=120)
+            meta["score"] = json.loads(r.stdout.strip().splitlines()[-1]) if r.stdout.strip() \
+                else {"error": (r.stderr or "scoring failed")[-300:]}
+        except subprocess.TimeoutExpired:
+            meta["score"] = {"error": "scoring took > 120 s"}
+        if check_only and "error" not in meta["score"]:
+            meta["score"] = {"check": "ok", "ms": meta["score"]["ms"]}
+    meta["scored_at"] = time.time()
+    meta_path.write_text(json.dumps(meta))
+    return meta
+
+
+def all_models() -> list:
+    out = []
+    for p in sorted(MODELS.glob("*.json")):
+        try:
+            out.append(json.loads(p.read_text()))
+        except Exception:
+            pass
+    return out
+
+
+@app.post("/api/models")
+async def upload_model(token: str = Form(""), team: str = Form(""), name: str = Form(""),
+                       notes: str = Form(""), file: UploadFile = File(...)):
+    check_token(token)
+    team = clean_person(team)
+    raw = await file.read(MAX_MODEL + 1)
+    if len(raw) > MAX_MODEL:
+        raise HTTPException(413, "model larger than 20 MB")
+    ts = time.strftime("%Y%m%d-%H%M%S")
+    mid = f"{ts}_{slug(team)}_{time.time_ns() % 1000000:06d}"
+    (MODELS / f"{mid}.onnx").write_bytes(raw)
+    (MODELS / f"{mid}.json").write_text(json.dumps({
+        "id": mid, "team": team, "name": (name or file.filename or "model")[:60],
+        "notes": notes[:200], "size_kb": round(len(raw) / 1024, 1), "uploaded": time.time()}))
+    meta = await asyncio.to_thread(score_model, mid)
+    return meta
+
+
+@app.get("/upload")
+def upload_page():
+    return FileResponse(STATIC / "upload.html", headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/api/models")
+def list_models(t: str = ""):
+    check_token(t)
+    return all_models()
+
+
+@app.get("/api/models/{mid}.onnx")
+def get_model(mid: str, t: str = ""):
+    check_token(t)
+    if not re.fullmatch(r"[\w-]+", mid) or not (MODELS / f"{mid}.onnx").exists():
+        raise HTTPException(404, "no such model")
+    return FileResponse(MODELS / f"{mid}.onnx", media_type="application/octet-stream")
+
+
+@app.post("/api/models/rescore")
+def rescore(t: str = ""):
+    """Instructor: re-score every model, e.g. after changing holdout.txt."""
+    check_token(t)
+    return [score_model(m["id"]) for m in all_models()]
+
+
+@app.get("/leaderboard", response_class=HTMLResponse)
+def leaderboard():
+    models = all_models()
+    best: dict = {}
+    for m in models:
+        acc = (m.get("score") or {}).get("acc")
+        if acc is not None and (m["team"] not in best or acc > best[m["team"]]["score"]["acc"]):
+            best[m["team"]] = m
+    ranked = sorted(best.values(), key=lambda m: -m["score"]["acc"])
+    rows = []
+    for i, m in enumerate(ranked, 1):
+        s = m["score"]
+        pc = " ".join(f"{g[:2]}&nbsp;{s['per_class'][g]:.2f}" if s["per_class"].get(g) is not None
+                      else f"{g[:2]}&nbsp;-" for g in GESTURES)
+        n_up = sum(1 for x in models if x["team"] == m["team"])
+        rows.append(f"<tr><td>{i}</td><th>{html.escape(m['team'])}</th><td>{html.escape(m['name'])}</td>"
+                    f"<td class=acc>{s['acc']:.3f}</td><td class=pc>{pc}</td><td>{s['ms']:.2f}</td>"
+                    f"<td>{m['size_kb']:.0f}</td><td>{n_up}</td></tr>")
+    errors = [m for m in models[-8:] if "error" in (m.get("score") or {})]
+    err_html = "".join(f"<li>{html.escape(m['team'])} / {html.escape(m['name'])}: "
+                       f"{html.escape(m['score']['error'])}</li>" for m in errors)
+    n_hold = len(holdout_people())
+    return f"""<!doctype html><html><head><meta charset="utf-8">
+<meta http-equiv="refresh" content="10"><title>Gestures leaderboard</title>
+<style>
+body{{font-family:system-ui,sans-serif;margin:24px;background:#fff;color:#111}}
+table{{border-collapse:collapse;font-size:20px}} td,th{{padding:6px 14px;border:1px solid #ccc;text-align:left}}
+.acc{{font-weight:bold;font-size:24px}} .pc{{font-size:14px;color:#555}} .err{{color:#c62828;font-size:14px}}
+</style></head><body>
+<h2>Leaderboard: accuracy on {n_hold} hidden people (best model per team)</h2>
+<table><thead><tr><th>#</th><th>team</th><th>model</th><th>accuracy</th><th>per gesture</th>
+<th>ms/take</th><th>kB</th><th>uploads</th></tr></thead><tbody>{''.join(rows)}</tbody></table>
+{f'<h3>Recent failed uploads</h3><ul class=err>{err_html}</ul>' if err_html else ''}
+</body></html>"""
+
+
+# ---------- live: phone runs the model, predictions relayed to the sim (long-polling) ----------
+# Long-polling rather than SSE: Cloudflare tunnels (and other proxies) buffer event streams.
+_live: dict = {}   # channel -> {"seq": int, "events": deque, "cond": Condition, "polled": time}
+
+
+def live_channel(name: str) -> dict:
+    from collections import deque
+    return _live.setdefault(slug(name), {"seq": 0, "events": deque(maxlen=50),
+                                         "cond": asyncio.Condition(), "polled": 0.0})
+
+
+@app.get("/live")
+def live_page():
+    return FileResponse(STATIC / "live.html", headers={"Cache-Control": "no-cache"})
+
+
+@app.post("/api/live/{channel}")
+async def live_post(channel: str, request: Request):
+    d = await request.json()
+    check_token(d.get("token"))
+    if d.get("label") not in GESTURES:
+        raise HTTPException(400, "bad label")
+    ch = live_channel(channel)
+    async with ch["cond"]:
+        ch["seq"] += 1
+        ch["events"].append({"seq": ch["seq"], "label": d["label"], "p": float(d.get("p", 1.0)),
+                             "t": time.time()})
+        ch["cond"].notify_all()
+    return {"listeners": int(time.time() - ch["polled"] < 30)}
+
+
+@app.get("/api/live/{channel}/next")
+async def live_next(channel: str, after: int = -1):
+    """Events with seq > after; waits up to 20 s for one. after=-1: start from now."""
+    ch = live_channel(channel)
+    ch["polled"] = time.time()
+    if after < 0:
+        return {"seq": ch["seq"], "events": []}
+    if after > ch["seq"]:      # the server restarted: the counter began again
+        after = 0
+
+    def new():
+        return [e for e in ch["events"] if e["seq"] > after]
+    async with ch["cond"]:
+        try:
+            await asyncio.wait_for(ch["cond"].wait_for(lambda: bool(new())), timeout=20)
+        except asyncio.TimeoutError:
+            pass
+        ch["polled"] = time.time()
+        return {"seq": ch["seq"], "events": new()}
+
+
+SIM_DIR = Path(__file__).resolve().parent.parent / "sim"
+if SIM_DIR.is_dir():
+    app.mount("/sim", StaticFiles(directory=SIM_DIR, html=True), name="sim")

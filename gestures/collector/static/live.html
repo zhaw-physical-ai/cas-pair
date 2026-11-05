@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Gesture live</title>
+<style>
+  :root { --bg:#fff; --fg:#111; --mut:#666; --acc:#0b62d6; --ok:#1a7f37; --bad:#c62828; --card:#f2f4f7; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111; --fg:#eee; --mut:#999; --card:#222; } }
+  * { box-sizing:border-box; }
+  body { font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--fg);
+         margin:0 auto; padding:12px 16px 40px; max-width:520px; }
+  h1 { font-size:20px; margin:4px 0 10px; }
+  label { display:block; font-size:14px; color:var(--mut); margin-top:8px; }
+  input, select { font-size:17px; width:100%; padding:8px; border-radius:8px; border:1px solid #888;
+                  background:var(--bg); color:var(--fg); }
+  #go { width:100%; font-size:24px; padding:20px 0; margin-top:12px; border-radius:14px; border:0;
+        background:var(--acc); color:#fff; font-weight:bold; }
+  #go.on { background:var(--bad); }
+  #big { font-size:56px; font-weight:bold; text-align:center; min-height:80px; margin:12px 0 4px; }
+  .bar { display:flex; align-items:center; gap:8px; margin:4px 0; font-size:15px; }
+  .bar span { width:60px; } .bar div { height:18px; background:var(--acc); border-radius:4px; }
+  .bar b { width:40px; text-align:right; font-weight:normal; color:var(--mut); }
+  #status { min-height:1.4em; margin:8px 0; } .ok { color:var(--ok); } .bad { color:var(--bad); }
+  .mut { color:var(--mut); font-size:13px; } code { word-break:break-all; }
+  #log { font-size:13px; color:var(--mut); max-height:120px; overflow:auto; }
+</style>
+</head>
+<body>
+<h1>Gesture live</h1>
+<label>Model</label>
+<select id="model"><option value="">loading…</option></select>
+<label>Channel (the sim listens to this name)</label>
+<input id="channel" autocapitalize="off" autocomplete="off">
+<label>Send to sim when p ≥ <span id="thrv">0.80</span></label>
+<input id="thr" type="range" min="0.4" max="0.99" step="0.01" value="0.8">
+<label>…and the same label wins <span id="stablev">3</span> windows in a row (100 ms each)</label>
+<input id="stable" type="range" min="1" max="10" step="1" value="3">
+<div id="tokrow"><label>Class token</label><input id="token" autocapitalize="off" autocomplete="off"></div>
+<button id="go">Start</button>
+<div id="status" class="mut"></div>
+<div id="big">–</div>
+<div id="bars"></div>
+<p class="mut">Sim on your laptop: <code id="simurl"></code></p>
+<div id="log"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+<script>
+const GESTURES = ["left", "right", "up", "down", "circle", "idle"];
+const FS = 50, T = 100, EVERY_MS = 100, COOLDOWN_MS = 600, REARM = 5, KEEP_MS = 4000;
+const $ = id => document.getElementById(id);
+const store = { get: k => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } },
+                set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+// iOS flips the sign of accelerationIncludingGravity; detect it from the UA (see index.html)
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+  || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/";
+ort.env.wasm.numThreads = 1;
+
+const qTok = new URLSearchParams(location.search).get("t");
+if (qTok) store.set("token", qTok);
+$("token").value = store.get("token");
+if ($("token").value) $("tokrow").style.display = "none";
+$("token").onchange = () => { store.set("token", $("token").value.trim()); loadModels(); };
+$("channel").value = store.get("channel") || (store.get("person") || "me").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+const simUrl = () => `${location.origin}/sim/?channel=${encodeURIComponent($("channel").value.trim())}`;
+$("simurl").textContent = simUrl();
+$("channel").oninput = () => { store.set("channel", $("channel").value.trim()); $("simurl").textContent = simUrl(); };
+$("thr").oninput = () => $("thrv").textContent = (+$("thr").value).toFixed(2);
+$("stable").oninput = () => $("stablev").textContent = $("stable").value;
+const token = () => $("token").value.trim();
+function status(msg, cls = "mut") { $("status").className = cls; $("status").textContent = msg; }
+function log(msg) { const d = document.createElement("div"); d.textContent = new Date().toLocaleTimeString() + "  " + msg; $("log").prepend(d); }
+
+$("bars").innerHTML = GESTURES.map(g => `<div class="bar"><span>${g}</span><div id="b_${g}" style="width:0"></div><b id="p_${g}"></b></div>`).join("");
+
+async function loadModels() {
+  if (!token()) { $("model").innerHTML = `<option value="">enter the class token</option>`; return; }
+  try {
+    const r = await fetch("api/models?t=" + encodeURIComponent(token()));
+    if (!r.ok) throw new Error((await r.json()).detail);
+    const ms = (await r.json()).reverse();
+    $("model").innerHTML = ms.length ? ms.map(m => {
+      const acc = m.score && m.score.acc != null ? ` (${(m.score.acc * 100).toFixed(0)}%)` : "";
+      return `<option value="${m.id}">${m.team}: ${m.name}${acc}</option>`; }).join("")
+      : `<option value="">no models uploaded yet</option>`;
+    const last = store.get("model"); if (last && ms.some(m => m.id === last)) $("model").value = last;
+  } catch (e) { status("Could not list models: " + e.message, "bad"); }
+}
+loadModels();
+
+// ---- preprocessing: same as load.py (iOS sign, gyro x=beta y=gamma z=alpha in rad/s, 50 Hz) ----
+// raw: {t: [ms], accG: [[x,y,z]], gyro: [[alpha,beta,gamma]] deg/s}. Returns Float32Array(T*6),
+// the last 2 s resampled onto a 50 Hz grid that ends at the newest sample.
+function interp(xs, ts, x) {          // like np.interp: clamp outside, linear inside
+  if (x <= ts[0]) return xs[0];
+  const n = ts.length; if (x >= ts[n - 1]) return xs[n - 1];
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ts[m] <= x) lo = m; else hi = m; }
+  return xs[lo] + (xs[hi] - xs[lo]) * (x - ts[lo]) / (ts[hi] - ts[lo]);
+}
+function preprocess(raw, ios) {
+  const n = raw.t.length, ts = raw.t.map(v => v / 1000), tEnd = ts[n - 1];
+  const sgn = ios ? -1 : 1, D = Math.PI / 180;
+  const ch = [
+    raw.accG.map(r => sgn * r[0]), raw.accG.map(r => sgn * r[1]), raw.accG.map(r => sgn * r[2]),
+    raw.gyro.map(r => D * r[1]), raw.gyro.map(r => D * r[2]), raw.gyro.map(r => D * r[0]),
+  ];
+  const out = new Float32Array(T * 6);
+  for (let k = 0; k < T; k++) {
+    const x = tEnd - (T - 1 - k) / FS;
+    for (let c = 0; c < 6; c++) out[k * 6 + c] = interp(ch[c], ts, x);
+  }
+  return out;
+}
+window.preprocess = preprocess;   // exposed for the pipeline test
+
+// ---- sensors ----
+const buf = { t: [], accG: [], gyro: [] };
+const num = v => (v === null || v === undefined || isNaN(v)) ? null : v;
+function onMotion(e) {
+  const a = e.accelerationIncludingGravity || {}, w = e.rotationRate || {};
+  if (num(a.x) === null) return;
+  const last = buf.gyro.length ? buf.gyro[buf.gyro.length - 1] : [0, 0, 0];
+  buf.t.push(e.timeStamp || performance.now());
+  buf.accG.push([a.x, a.y, a.z]);
+  buf.gyro.push([num(w.alpha) ?? last[0], num(w.beta) ?? last[1], num(w.gamma) ?? last[2]]);
+  while (buf.t.length && buf.t[buf.t.length - 1] - buf.t[0] > KEEP_MS) { buf.t.shift(); buf.accG.shift(); buf.gyro.shift(); }
+}
+
+// ---- inference loop ----
+let session = null, timer = null, lastSent = 0, running = false, busy = false;
+// decision state: a streak of confident windows with the same label fires once; the same label
+// fires again only after REARM quiet windows (idle or unsure), another label right away
+let streakLabel = null, streak = 0, lastFired = null, quietSinceFire = 0;
+function softmax(v) {
+  const s = v.reduce((a, b) => a + b, 0);
+  if (v.every(x => x >= 0 && x <= 1) && Math.abs(s - 1) < 1e-3) return v;     // already probabilities
+  const m = Math.max(...v), e = v.map(x => Math.exp(x - m)), z = e.reduce((a, b) => a + b, 0);
+  return e.map(x => x / z);
+}
+async function step() {
+  if (!session || buf.t.length < 20 || buf.t[buf.t.length - 1] - buf.t[0] < 2000) {
+    status("Collecting 2 s of sensor data…"); return;
+  }
+  const xdata = preprocess(buf, isIOS);
+  const x = new ort.Tensor("float32", xdata, [1, T, 6]);
+  const t0 = performance.now();
+  const out = await session.run({ [session.inputNames[0]]: x });
+  const ms = performance.now() - t0;
+  const p = softmax(Array.from(out[session.outputNames[0]].data));
+  window._last = { x: Array.from(xdata), p };   // for debugging / tests
+  let best = 0; p.forEach((v, i) => { if (v > p[best]) best = i; });
+  GESTURES.forEach((g, i) => { $("b_" + g).style.width = (p[i] * 300) + "px"; $("p_" + g).textContent = p[i].toFixed(2); });
+  $("big").textContent = GESTURES[best];
+  status(`running, ${ms.toFixed(1)} ms per prediction`, "ok");
+  const now = performance.now();
+  const top = GESTURES[best];
+  if (top !== "idle" && p[best] >= +$("thr").value) {
+    streak = top === streakLabel ? streak + 1 : 1;
+    streakLabel = top;
+  } else {
+    streak = 0; streakLabel = null; quietSinceFire++;
+  }
+  if (streak >= +$("stable").value && (top !== lastFired || quietSinceFire >= REARM)
+      && now - lastSent > COOLDOWN_MS) {
+    lastSent = now; lastFired = top; quietSinceFire = 0;
+    log(`${GESTURES[best]} ${p[best].toFixed(2)}`);
+    fetch("api/live/" + encodeURIComponent($("channel").value.trim() || "me"), {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: token(), label: GESTURES[best], p: p[best] }),
+    }).then(r => r.json()).then(j => { if (j.listeners === 0) log("(no sim listening on this channel)"); }).catch(() => {});
+  }
+}
+
+$("go").addEventListener("click", () => {
+  if (running) { clearInterval(timer); running = false; $("go").textContent = "Start"; $("go").classList.remove("on"); status("stopped"); return; }
+  // iOS: the permission request must happen synchronously in the tap
+  let perm = Promise.resolve("granted");
+  if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") perm = DeviceMotionEvent.requestPermission();
+  perm.then(async p => {
+    if (p !== "granted") throw new Error("Motion permission denied. Reload and allow it.");
+    if (!$("model").value) throw new Error("Pick a model first.");
+    store.set("model", $("model").value);
+    status("Loading model…");
+    const r = await fetch(`api/models/${$("model").value}.onnx?t=${encodeURIComponent(token())}`);
+    if (!r.ok) throw new Error("model download failed");
+    session = await ort.InferenceSession.create(new Uint8Array(await r.arrayBuffer()), { executionProviders: ["wasm"] });
+    window.addEventListener("devicemotion", onMotion);
+    running = true; $("go").textContent = "Stop"; $("go").classList.add("on");
+    timer = setInterval(() => { if (busy) return; busy = true;
+      step().catch(e => status("Inference error: " + e.message, "bad")).finally(() => busy = false); }, EVERY_MS);
+  }).catch(e => status(String(e.message || e), "bad"));
+});
+</script>
+</body>
+</html>

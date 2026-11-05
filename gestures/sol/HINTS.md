@@ -67,6 +67,23 @@ these hints say.
   random *other* class. The test labels stay clean.
 - Repeat with a few seeds; one run is noisy.
 
+## Task 6: Live
+- Export from PyTorch:
+  ```python
+  model.eval()
+  torch.onnx.export(model, torch.zeros(1, 100, 6), "model.onnx", input_names=["x"],
+                    output_names=["logits"], dynamic_axes={"x": {0: "n"}, "logits": {0: "n"}},
+                    dynamo=False)
+  ```
+  The model must take raw `load()` units: store the training mean and std as buffers
+  (`register_buffer`) and normalize in `forward`.
+- Check before uploading: `onnxruntime.InferenceSession("model.onnx").run(None, {"x": X[:5]})`
+  should match your PyTorch output.
+- The live page sends a gesture only when the same label wins several windows in a row with
+  enough confidence (both settings are on the page), and never `idle`.
+- Misfires: training windows are centred on the motion, live windows slide. Train with random
+  time shifts of ±30 samples (pad with the edge values).
+
 ## Advanced
 - LSTM/GRU: input (N, T, 6) with `batch_first=True`; classify from the last hidden state or the
   mean over time. Downsampling to 25 Hz makes training faster.

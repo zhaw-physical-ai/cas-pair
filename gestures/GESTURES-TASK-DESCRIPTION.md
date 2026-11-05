@@ -63,6 +63,22 @@ Basic:
 Basic:
 - flip 10%, 20% and 40% of the training labels at random and measure the effect
 
+## Task 6: Your model live, driving a simulated arm (optional)
+Basic:
+- export your best neural net as ONNX: input `(N, 100, 6)` float32 in the units `load()` gives,
+  output `(N, 6)` scores in `GESTURES` order. Put the normalization inside the model.
+- upload it at `https://<server>/upload` (same server as the phone page)
+- on your phone, open `https://<server>/live`, pick your model, set the channel to your pair
+  name, and press Start. Do the gestures: what does the live page get wrong that your test
+  accuracy did not show you?
+
+Advanced:
+- on your laptop, open `https://<server>/sim/?channel=<pair name>`: a simulated SO-101 arm in
+  your browser. Your gestures steer it: left/right turn the base, up/down raise and lower the arm,
+  circle opens/closes the gripper. Push the red cube onto the green square.
+- the live page slides a 2 s window over the stream, but your training windows were centred on
+  the motion. Close that gap: train with random time shifts, or tune when the live page fires.
+
 ## Advanced (pick one per pair)
 - **Sequence models:** an LSTM/GRU or a small transformer. Does it beat the CNN? At what data
   size?
@@ -94,4 +110,5 @@ leave-one-person-out, number of training samples.
 - New takes keep arriving during class. Download the zip once
   (`curl -o gestures.zip "<link>"`) and use `load("gestures.zip")`, so your numbers stay
   comparable.
+- Task 6 needs two more packages: `uv add onnx onnxruntime`.
 - Stuck? See [`sol/HINTS.md`](sol/HINTS.md).
