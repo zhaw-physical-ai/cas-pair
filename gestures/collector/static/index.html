@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Gesture recorder</title>
+<style>
+  :root { --bg:#fff; --fg:#111; --mut:#666; --acc:#0b62d6; --ok:#1a7f37; --bad:#c62828; --card:#f2f4f7; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111; --fg:#eee; --mut:#999; --card:#222; } }
+  * { box-sizing:border-box; }
+  body { font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--fg);
+         margin:0 auto; padding:12px 16px 40px; max-width:520px; -webkit-user-select:none; user-select:none; }
+  h1 { font-size:20px; margin:4px 0 10px; }
+  label { display:block; font-size:14px; color:var(--mut); margin-top:8px; }
+  input, select { font-size:18px; width:100%; padding:8px; border-radius:8px; border:1px solid #888;
+                  background:var(--bg); color:var(--fg); }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0; }
+  .g { font-size:17px; padding:12px 4px; border-radius:10px; border:2px solid #888; background:var(--card); color:var(--fg); }
+  .g small { display:block; font-size:13px; color:var(--mut); }
+  .g.sel { border-color:var(--acc); background:var(--acc); color:#fff; }
+  .g.sel small { color:#dde; }
+  .g.done small { color:var(--ok); font-weight:bold; }
+  .g.sel.done small { color:#cfc; }
+  #rec { width:100%; font-size:28px; padding:30px 0; border-radius:16px; border:0; background:var(--acc); color:#fff; font-weight:bold; }
+  #rec:disabled { opacity:.6; }
+  #rec.going { background:var(--bad); }
+  #status { min-height:1.5em; margin:10px 0; font-size:16px; }
+  .ok { color:var(--ok); } .bad { color:var(--bad); }
+  #warn { display:none; background:var(--bad); color:#fff; padding:10px; border-radius:8px; }
+  canvas { width:100%; height:160px; background:var(--card); border-radius:8px; }
+  .row { display:flex; gap:8px; margin-top:8px; }
+  .small { font-size:15px; padding:10px; border-radius:8px; border:1px solid #888; background:var(--card); color:var(--fg); flex:1; }
+  details { margin-top:24px; background:var(--card); padding:10px; border-radius:8px; }
+  summary { font-weight:bold; }
+  ol { padding-left:20px; } li { margin:4px 0; }
+  .mut { color:var(--mut); font-size:13px; }
+</style>
+</head>
+<body>
+<h1>Gesture recorder</h1>
+<div id="warn"></div>
+
+<label>Your name (same every time)</label>
+<input id="person" autocomplete="name" placeholder="first name + initial">
+<div id="tokrow"><label>Class token</label><input id="token" autocapitalize="off" autocomplete="off"></div>
+
+<div class="grid" id="gestures"></div>
+
+<button id="rec">Record</button>
+<div id="status" class="mut">Hold the phone upright, screen facing you, same grip every take.</div>
+<canvas id="plot" width="1000" height="320"></canvas>
+<div class="mut">top: acceleration (x y z) &nbsp; bottom: rotation rate (x y z)</div>
+<div class="row">
+  <button class="small" id="del">Delete my last take</button>
+</div>
+
+<details id="fallback">
+  <summary>Sensors not working? Use phyphox</summary>
+  <ol>
+    <li>Install the free app <b>phyphox</b> (App Store / Play Store).</li>
+    <li>Open <b>Acceleration with g</b> (or <b>Gyroscope</b>). Menu ⋮ → <b>Timed run</b>: delay 2 s, duration 3 s.</li>
+    <li>Press ▶, do the gesture once when it starts.</li>
+    <li>Menu ⋮ → <b>Export data</b> → <b>CSV (Comma, decimal point)</b> → save to Files.</li>
+    <li>Pick the gesture above, choose the file here, upload. One file per take.</li>
+  </ol>
+  <input type="file" id="pfile" accept=".csv,.zip,text/csv,application/zip">
+  <div class="row"><button class="small" id="pup">Upload phyphox file</button></div>
+</details>
+
+<script>
+const GESTURES = ["left", "right", "up", "down", "circle", "idle"];
+const TARGET = 15, REC_MS = 2500;
+const $ = id => document.getElementById(id);
+const store = { get: k => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } },
+                set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+const isIOS = typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function"
+  || /iPhone|iPad|iPod/.test(navigator.userAgent)
+  || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+// ---- name + token ----
+const qTok = new URLSearchParams(location.search).get("t");
+if (qTok) store.set("token", qTok);
+$("token").value = store.get("token");
+if ($("token").value) $("tokrow").style.display = "none";
+$("person").value = store.get("person");
+$("person").addEventListener("change", () => { store.set("person", $("person").value.trim()); loadCounts(); });
+$("token").addEventListener("change", () => store.set("token", $("token").value.trim()));
+const person = () => $("person").value.trim().replace(/\s+/g, " ");
+const token = () => $("token").value.trim();
+
+if (!window.isSecureContext) {
+  $("warn").style.display = "block";
+  $("warn").textContent = "Not HTTPS: phone sensors are blocked. Open the https:// link from the projector.";
+}
+
+// ---- gesture picker ----
+let gesture = store.get("gesture") || GESTURES[0], counts = {};
+function drawGestures() {
+  $("gestures").innerHTML = "";
+  for (const g of GESTURES) {
+    const b = document.createElement("button");
+    const n = counts[g] || 0;
+    b.className = "g" + (g === gesture ? " sel" : "") + (n >= TARGET ? " done" : "");
+    b.innerHTML = `${g}<small>${n} / ${TARGET}</small>`;
+    b.onclick = () => { gesture = g; store.set("gesture", g); drawGestures(); };
+    $("gestures").appendChild(b);
+  }
+}
+async function loadCounts() {
+  if (!person()) { counts = {}; drawGestures(); return; }
+  try {
+    const r = await fetch("api/counts?person=" + encodeURIComponent(person()));
+    if (r.ok) counts = await r.json();
+  } catch (e) {}
+  drawGestures();
+}
+drawGestures(); loadCounts();
+
+function status(msg, cls = "") { $("status").className = cls; $("status").textContent = msg; }
+
+// ---- sound + vibration (iOS has no vibrate, so beep too) ----
+let actx = null;
+function beep(freq = 880, ms = 120) {
+  try {
+    if (!actx) return;
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.value = freq; g.gain.value = 0.2;
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + ms / 1000);
+  } catch (e) {}
+}
+function buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ---- sensors ----
+let listening = false, recording = false, buf = null, lastEvent = 0;
+const r4 = v => (v === null || v === undefined || isNaN(v)) ? null : Math.round(v * 10000) / 10000;
+function onMotion(e) {
+  lastEvent = performance.now();
+  if (!recording) return;
+  const a = e.accelerationIncludingGravity || {}, l = e.acceleration || {}, w = e.rotationRate || {};
+  buf.t.push(r4(e.timeStamp || performance.now()));
+  buf.accG.push([r4(a.x), r4(a.y), r4(a.z)]);
+  buf.acc.push([r4(l.x), r4(l.y), r4(l.z)]);
+  buf.gyro.push([r4(w.alpha), r4(w.beta), r4(w.gamma)]);
+  if (e.interval) buf.interval = e.interval;
+}
+function startListening() {
+  if (!listening) { window.addEventListener("devicemotion", onMotion); listening = true; }
+}
+
+$("rec").addEventListener("click", () => {
+  // Everything that needs the user tap must happen synchronously here (iOS).
+  if (!person()) { status("Enter your name first.", "bad"); $("person").focus(); return; }
+  if (!token()) { status("Enter the class token first.", "bad"); $("tokrow").style.display = "block"; return; }
+  store.set("person", person());
+  try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch (e) {}
+  let perm = Promise.resolve("granted");
+  if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+    perm = DeviceMotionEvent.requestPermission();
+  }
+  perm.then(p => {
+    if (p !== "granted") throw new Error("Motion permission denied. Reload the page and allow it.");
+    startListening();
+    return record();
+  }).catch(err => { status(String(err.message || err), "bad"); $("rec").disabled = false; $("rec").textContent = "Record"; $("rec").classList.remove("going"); });
+});
+
+async function record() {
+  const btn = $("rec"); btn.disabled = true;
+  const g = gesture;
+  for (const n of [3, 2, 1]) { btn.textContent = `${g}: ${n}`; beep(660); buzz(80); await sleep(700); }
+  buf = { t: [], accG: [], acc: [], gyro: [], interval: null };
+  btn.textContent = `${g.toUpperCase()}!`; btn.classList.add("going");
+  beep(1320, 200); buzz(200);
+  recording = true;
+  await sleep(REC_MS);
+  recording = false;
+  beep(440, 150); buzz([60, 60, 60]);
+  btn.classList.remove("going"); btn.textContent = "saving…";
+  const take = buf;
+  const n = take.t.length;
+  const hz = n > 1 ? (n - 1) / ((take.t[n - 1] - take.t[0]) / 1000) : 0;
+  if (n < 20) {
+    status(`No sensor data (${n} samples). Try another browser, or use phyphox below.`, "bad");
+    $("fallback").open = true;
+    btn.disabled = false; btn.textContent = "Record"; return;
+  }
+  plot(take);
+  try {
+    const r = await fetch("api/recording", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: token(), person: person(), gesture: g, ua: navigator.userAgent, ios: isIOS,
+                             interval: take.interval, t: take.t, accG: take.accG, acc: take.acc, gyro: take.gyro })
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.detail || r.status);
+    counts = j.counts || counts; drawGestures();
+    status(`Saved ${g} #${counts[g] || "?"}: ${n} samples @ ${hz.toFixed(0)} Hz. Check the plot - bad? Delete it.`, "ok");
+  } catch (e) {
+    status("Upload failed: " + e.message, "bad");
+  }
+  btn.disabled = false; btn.textContent = "Record";
+}
+
+// ---- tiny plot of last take ----
+function plot(take) {
+  const c = $("plot"), ctx = c.getContext("2d"), W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+  const cols = ["#e53935", "#43a047", "#1e88e5"];
+  const t0 = take.t[0], tN = take.t[take.t.length - 1] || t0 + 1;
+  [[take.accG, 0], [take.gyro, H / 2]].forEach(([arr, y0]) => {
+    let lo = Infinity, hi = -Infinity;
+    for (const v of arr) for (const x of v) if (x !== null) { lo = Math.min(lo, x); hi = Math.max(hi, x); }
+    if (!isFinite(lo)) return;
+    if (hi - lo < 1e-6) { hi += 1; lo -= 1; }
+    for (let k = 0; k < 3; k++) {
+      ctx.strokeStyle = cols[k]; ctx.lineWidth = 3; ctx.beginPath();
+      arr.forEach((v, i) => {
+        if (v[k] === null) return;
+        const x = (take.t[i] - t0) / (tN - t0) * W, y = y0 + H / 2 - 6 - (v[k] - lo) / (hi - lo) * (H / 2 - 12);
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      });
+      ctx.stroke();
+    }
+  });
+  ctx.strokeStyle = "#888"; ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+}
+
+// ---- delete last ----
+$("del").addEventListener("click", async () => {
+  if (!person()) return status("Enter your name first.", "bad");
+  if (!confirm(`Delete the last take of ${person()}?`)) return;
+  try {
+    const r = await fetch(`api/recording/last?person=${encodeURIComponent(person())}&t=${encodeURIComponent(token())}`, { method: "DELETE" });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.detail || r.status);
+    counts = j.counts || counts; drawGestures();
+    const c = $("plot"); c.getContext("2d").clearRect(0, 0, c.width, c.height);
+    status("Deleted " + j.deleted, "ok");
+  } catch (e) { status("Delete failed: " + e.message, "bad"); }
+});
+
+// ---- phyphox upload ----
+$("pup").addEventListener("click", async () => {
+  const f = $("pfile").files[0];
+  if (!person() || !token()) return status("Enter name and token first.", "bad");
+  if (!f) return status("Choose a phyphox CSV file first.", "bad");
+  const fd = new FormData();
+  fd.append("token", token()); fd.append("person", person()); fd.append("gesture", gesture); fd.append("file", f);
+  try {
+    const r = await fetch("api/phyphox", { method: "POST", body: fd });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.detail || r.status);
+    counts = j.counts || counts; drawGestures();
+    $("pfile").value = "";
+    status(`Saved phyphox ${j.kind} take for ${gesture}.`, "ok");
+  } catch (e) { status("Upload failed: " + e.message, "bad"); }
+});
+</script>
+</body>
+</html>

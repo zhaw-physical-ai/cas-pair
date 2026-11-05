@@ -1,0 +1,14 @@
+[project]
+name = "gestures-collector"
+version = "0.1.0"
+description = "Collect phone IMU gesture takes for the CAS gestures lab"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "python-multipart>=0.0.9",
+    "segno>=1.6",
+]
+
+[tool.uv]
+package = false
