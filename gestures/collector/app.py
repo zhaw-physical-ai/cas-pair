@@ -346,20 +346,28 @@ def holdout_npz() -> Path | None:
     if not path.exists() or not keyfile.exists() or keyfile.read_text() != key:
         X, y, _ = gload.load(files, verbose=False)
         np = gload.np
-        np.savez(path, X=X, y=np.array([GESTURES.index(g) for g in y]))
+        np.savez(path, X=X, y=np.array([GESTURES.index(g) for g in y]), kind="holdout")
         keyfile.write_text(key)
     return path
 
 
 def check_npz() -> Path | None:
-    """A few class takes, only to check that an uploaded model runs (no score: they may be training data)."""
-    files = [p for p, _, _ in take_index()][:12]
+    """Up to 10 class takes per gesture, to check that an uploaded model runs and its label order is
+    plausible (no score: they may be training data). Rebuilt when 50 more takes have come in."""
+    per_g: dict = {}
+    for p, _, g in take_index():
+        if len(per_g.setdefault(g, [])) < 10:
+            per_g[g].append(p)
+    files = [p for ps in per_g.values() for p in ps]
     if not files:
         return None
     path = MODELS / "check.npz"
-    if not path.exists():
+    stamp = MODELS / "check.key"
+    key = str(len(take_index()) // 50)
+    if not path.exists() or not stamp.exists() or stamp.read_text() != key:
+        stamp.write_text(key)
         X, y, _ = gload.load(files, verbose=False)
-        gload.np.savez(path, X=X, y=gload.np.array([GESTURES.index(g) for g in y]))
+        gload.np.savez(path, X=X, y=gload.np.array([GESTURES.index(g) for g in y]), kind="check")
     return path
 
 
@@ -376,14 +384,17 @@ def score_model(mid: str) -> dict:
     else:
         try:
             r = subprocess.run([sys.executable, str(Path(__file__).parent / "score.py"),
-                                str(MODELS / f"{mid}.onnx"), str(hp)],
+                                str(MODELS / f"{mid}.onnx"), str(hp), meta.get("labels", ",".join(GESTURES))],
                                capture_output=True, text=True, timeout=120)
             meta["score"] = json.loads(r.stdout.strip().splitlines()[-1]) if r.stdout.strip() \
                 else {"error": (r.stderr or "scoring failed")[-300:]}
         except subprocess.TimeoutExpired:
             meta["score"] = {"error": "scoring took > 120 s"}
+        if "io" in meta["score"]:                 # how the live page must feed and read the model
+            meta["io"] = meta["score"].pop("io")
         if check_only and "error" not in meta["score"]:
-            meta["score"] = {"check": "ok", "ms": meta["score"]["ms"]}
+            meta["score"] = {"check": "ok", "ms": meta["score"]["ms"],
+                             "warnings": meta["score"].get("warnings", [])}
     meta["scored_at"] = time.time()
     meta_path.write_text(json.dumps(meta))
     return meta
@@ -401,7 +412,7 @@ def all_models() -> list:
 
 @app.post("/api/models")
 async def upload_model(token: str = Form(""), team: str = Form(""), name: str = Form(""),
-                       notes: str = Form(""), file: UploadFile = File(...)):
+                       notes: str = Form(""), labels: str = Form(""), file: UploadFile = File(...)):
     check_token(token)
     team = clean_person(team)
     raw = await file.read(MAX_MODEL + 1)
@@ -412,7 +423,9 @@ async def upload_model(token: str = Form(""), team: str = Form(""), name: str = 
     (MODELS / f"{mid}.onnx").write_bytes(raw)
     (MODELS / f"{mid}.json").write_text(json.dumps({
         "id": mid, "team": team, "name": (name or file.filename or "model")[:60],
-        "notes": notes[:200], "size_kb": round(len(raw) / 1024, 1), "uploaded": time.time()}))
+        "notes": notes[:200], "size_kb": round(len(raw) / 1024, 1), "uploaded": time.time(),
+        # output order of the model's scores; default: the order in load.GESTURES
+        "labels": ",".join(s.strip() for s in (labels or ",".join(GESTURES)).split(",") if s.strip())[:200]}))
     meta = await asyncio.to_thread(score_model, mid)
     return meta
 

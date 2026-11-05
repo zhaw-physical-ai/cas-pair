@@ -77,6 +77,16 @@ these hints say.
   ```
   The model must take raw `load()` units: store the training mean and std as buffers
   (`register_buffer`) and normalize in `forward`.
+- Other inputs work too: `(N, 6, 100)`, flattened `(N, 600)`, another window length such as
+  `(N, 50, 6)`, or the 30 features. A scikit-learn model on `features(X)`:
+  ```python
+  from skl2onnx import to_onnx          # uv add skl2onnx
+  onx = to_onnx(clf, F[:1].astype(np.float32), options={id(clf): {"zipmap": False}})
+  open("model.onnx", "wb").write(onx.SerializeToString())
+  ```
+  If you used a scaler, export the whole pipeline. Labels: `",".join(clf.classes_)` (alphabetical).
+- The label order on the upload page is the order of your model's outputs. `np.unique(y)` and
+  scikit-learn sort the labels alphabetically: `circle,down,idle,left,right,up`.
 - Check before uploading: `onnxruntime.InferenceSession("model.onnx").run(None, {"x": X[:5]})`
   should match your PyTorch output.
 - The live page sends a gesture only when the same label wins several windows in a row with

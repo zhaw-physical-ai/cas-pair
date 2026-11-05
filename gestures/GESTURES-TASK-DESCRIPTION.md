@@ -65,9 +65,10 @@ Basic:
 
 ## Task 6: Your model live, driving a simulated arm (optional)
 Basic:
-- export your best neural net as ONNX: input `(N, 100, 6)` float32 in the units `load()` gives,
-  output `(N, 6)` scores in `GESTURES` order. Put the normalization inside the model.
-- upload it at `https://<server>/upload` (same server as the phone page)
+- export your best model as ONNX: a neural net on the window, or a scikit-learn model on
+  `features(X)`. It must take the units `load()` gives, so put any normalization inside it.
+- upload it at `https://<server>/upload` (same server as the phone page), with the order of
+  its output labels. The page says if the model runs, and warns if the order looks wrong.
 - on your phone, open `https://<server>/live`, pick your model, set the channel to your pair
   name, and press Start. Do the gestures: what does the live page get wrong that your test
   accuracy did not show you?

@@ -45,7 +45,7 @@
 <p class="mut">Sim on your laptop: <code id="simurl"></code></p>
 <div id="log"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.29.0/dist/ort.min.js"></script>
 <script>
 const GESTURES = ["left", "right", "up", "down", "circle", "idle"];
 const FS = 50, T = 100, EVERY_MS = 100, COOLDOWN_MS = 600, REARM = 5, KEEP_MS = 4000;
@@ -55,7 +55,7 @@ const store = { get: k => { try { return localStorage.getItem(k) || ""; } catch 
 // iOS flips the sign of accelerationIncludingGravity; detect it from the UA (see index.html)
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
   || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/";
+ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.29.0/dist/";
 ort.env.wasm.numThreads = 1;
 
 const qTok = new URLSearchParams(location.search).get("t");
@@ -73,7 +73,11 @@ const token = () => $("token").value.trim();
 function status(msg, cls = "mut") { $("status").className = cls; $("status").textContent = msg; }
 function log(msg) { const d = document.createElement("div"); d.textContent = new Date().toLocaleTimeString() + "  " + msg; $("log").prepend(d); }
 
-$("bars").innerHTML = GESTURES.map(g => `<div class="bar"><span>${g}</span><div id="b_${g}" style="width:0"></div><b id="p_${g}"></b></div>`).join("");
+function drawBars(labels) {
+  $("bars").innerHTML = labels.map((g, i) => `<div class="bar"><span>${g}</span><div id="b_${i}" style="width:0"></div><b id="p_${i}"></b></div>`).join("");
+}
+drawBars(GESTURES);
+let MODELS = {};
 
 async function loadModels() {
   if (!token()) { $("model").innerHTML = `<option value="">enter the class token</option>`; return; }
@@ -81,9 +85,11 @@ async function loadModels() {
     const r = await fetch("api/models?t=" + encodeURIComponent(token()));
     if (!r.ok) throw new Error((await r.json()).detail);
     const ms = (await r.json()).reverse();
+    MODELS = Object.fromEntries(ms.map(m => [m.id, m]));
     $("model").innerHTML = ms.length ? ms.map(m => {
       const acc = m.score && m.score.acc != null ? ` (${(m.score.acc * 100).toFixed(0)}%)` : "";
-      return `<option value="${m.id}">${m.team}: ${m.name}${acc}</option>`; }).join("")
+      const bad = m.score && m.score.error ? " ⚠ does not run" : "";
+      return `<option value="${m.id}">${m.team}: ${m.name}${acc}${bad}</option>`; }).join("")
       : `<option value="">no models uploaded yet</option>`;
     const last = store.get("model"); if (last && ms.some(m => m.id === last)) $("model").value = last;
   } catch (e) { status("Could not list models: " + e.message, "bad"); }
@@ -116,6 +122,39 @@ function preprocess(raw, ios) {
 }
 window.preprocess = preprocess;   // exposed for the pipeline test
 
+// ---- feed the model the input layout the server detected at upload (see collector/score.py) ----
+function resampleT(x, T2) {          // x: Float32Array(T*6) -> Float32Array(T2*6), linear in time
+  if (T2 === T) return x;
+  const out = new Float32Array(T2 * 6);
+  for (let k = 0; k < T2; k++) {
+    const pos = T2 === 1 ? 0 : k * (T - 1) / (T2 - 1), i = Math.floor(pos), f = pos - i, j = Math.min(i + 1, T - 1);
+    for (let c = 0; c < 6; c++) out[k * 6 + c] = x[i * 6 + c] * (1 - f) + x[j * 6 + c] * f;
+  }
+  return out;
+}
+function features(x) {               // same as load.features: mean, std, min, max, energy per channel
+  const f = new Float32Array(30);
+  for (let c = 0; c < 6; c++) {
+    let sum = 0, sq = 0, mn = Infinity, mx = -Infinity;
+    for (let k = 0; k < T; k++) { const v = x[k * 6 + c]; sum += v; sq += v * v; mn = Math.min(mn, v); mx = Math.max(mx, v); }
+    const mean = sum / T;
+    f[c] = mean; f[6 + c] = Math.sqrt(Math.max(sq / T - mean * mean, 0)); f[12 + c] = mn; f[18 + c] = mx; f[24 + c] = sq / T;
+  }
+  return f;
+}
+function modelInput(x, io) {
+  if (io.layout === "features") return new ort.Tensor("float32", features(x), [1, 30]);
+  const xr = resampleT(x, io.T);
+  if (io.layout === "flat") return new ort.Tensor("float32", xr, [1, io.T * 6]);
+  if (io.layout === "nct") {
+    const t = new Float32Array(io.T * 6);
+    for (let k = 0; k < io.T; k++) for (let c = 0; c < 6; c++) t[c * io.T + k] = xr[k * 6 + c];
+    return new ort.Tensor("float32", t, [1, 6, io.T]);
+  }
+  return new ort.Tensor("float32", xr, [1, io.T, 6]);
+}
+window.modelInput = modelInput; window.features = features;   // for the pipeline test
+
 // ---- sensors ----
 const buf = { t: [], accG: [], gyro: [] };
 const num = v => (v === null || v === undefined || isNaN(v)) ? null : v;
@@ -130,7 +169,7 @@ function onMotion(e) {
 }
 
 // ---- inference loop ----
-let session = null, timer = null, lastSent = 0, running = false, busy = false;
+let session = null, IO = null, timer = null, lastSent = 0, running = false, busy = false;
 // decision state: a streak of confident windows with the same label fires once; the same label
 // fires again only after REARM quiet windows (idle or unsure), another label right away
 let streakLabel = null, streak = 0, lastFired = null, quietSinceFire = 0;
@@ -145,19 +184,25 @@ async function step() {
     status("Collecting 2 s of sensor data…"); return;
   }
   const xdata = preprocess(buf, isIOS);
-  const x = new ort.Tensor("float32", xdata, [1, T, 6]);
   const t0 = performance.now();
-  const out = await session.run({ [session.inputNames[0]]: x });
+  const out = await session.run({ [IO.input]: modelInput(xdata, IO) }, [IO.output]);
   const ms = performance.now() - t0;
-  const p = softmax(Array.from(out[session.outputNames[0]].data));
+  const o = out[IO.output].data, L = IO.labels;
+  let p;                                      // one probability per label
+  if (IO.kind === "scores") p = softmax(Array.from(o, Number));
+  else {
+    const lab = IO.kind === "index" ? L[Number(o[0])] : String(o[0]);
+    p = L.map(g => g === lab ? 1 : 0);
+  }
   window._last = { x: Array.from(xdata), p };   // for debugging / tests
   let best = 0; p.forEach((v, i) => { if (v > p[best]) best = i; });
-  GESTURES.forEach((g, i) => { $("b_" + g).style.width = (p[i] * 300) + "px"; $("p_" + g).textContent = p[i].toFixed(2); });
-  $("big").textContent = GESTURES[best];
+  L.forEach((g, i) => { $("b_" + i).style.width = (p[i] * 300) + "px"; $("p_" + i).textContent = p[i].toFixed(2); });
+  $("big").textContent = L[best];
   status(`running, ${ms.toFixed(1)} ms per prediction`, "ok");
   const now = performance.now();
-  const top = GESTURES[best];
-  if (top !== "idle" && p[best] >= +$("thr").value) {
+  const top = L[best];
+  const sendable = GESTURES.includes(top) && top !== "idle";
+  if (sendable && p[best] >= +$("thr").value) {
     streak = top === streakLabel ? streak + 1 : 1;
     streakLabel = top;
   } else {
@@ -166,10 +211,10 @@ async function step() {
   if (streak >= +$("stable").value && (top !== lastFired || quietSinceFire >= REARM)
       && now - lastSent > COOLDOWN_MS) {
     lastSent = now; lastFired = top; quietSinceFire = 0;
-    log(`${GESTURES[best]} ${p[best].toFixed(2)}`);
+    log(`${top} ${p[best].toFixed(2)}`);
     fetch("api/live/" + encodeURIComponent($("channel").value.trim() || "me"), {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: token(), label: GESTURES[best], p: p[best] }),
+      body: JSON.stringify({ token: token(), label: top, p: p[best] }),
     }).then(r => r.json()).then(j => { if (j.listeners === 0) log("(no sim listening on this channel)"); }).catch(() => {});
   }
 }
@@ -187,6 +232,11 @@ $("go").addEventListener("click", () => {
     const r = await fetch(`api/models/${$("model").value}.onnx?t=${encodeURIComponent(token())}`);
     if (!r.ok) throw new Error("model download failed");
     session = await ort.InferenceSession.create(new Uint8Array(await r.arrayBuffer()), { executionProviders: ["wasm"] });
+    const m = MODELS[$("model").value] || {};
+    IO = m.io || { input: session.inputNames[0], output: session.outputNames[0], layout: "ntc", T: 100,
+                   kind: "scores", labels: (m.labels || GESTURES.join(",")).split(",") };
+    if (!session.outputNames.includes(IO.output)) IO.output = session.outputNames[0];
+    drawBars(IO.labels);
     window.addEventListener("devicemotion", onMotion);
     running = true; $("go").textContent = "Stop"; $("go").classList.add("on");
     timer = setInterval(() => { if (busy) return; busy = true;

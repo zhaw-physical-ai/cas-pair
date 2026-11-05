@@ -22,15 +22,19 @@
 </head>
 <body>
 <h1>Upload a model</h1>
-<p class="mut">ONNX, input <code>(N, 100, 6)</code> float32 in <code>load()</code> units, output
-<code>(N, 6)</code> scores in the order left, right, up, down, circle, idle. After the upload, open
-<a href="live">/live</a> on your phone and pick your model.</p>
+<p class="mut">An ONNX model on the 2 s window in <code>load()</code> units. Inputs that work:
+<code>(N, 100, 6)</code>, <code>(N, 6, 100)</code>, flattened <code>(N, 600)</code>, another window
+length such as <code>(N, 50, 6)</code>, or the 30 <code>features(X)</code>. Outputs: scores
+<code>(N, C)</code>, class indices, or labels. After the upload, open <a href="live">/live</a> on your
+phone and pick your model.</p>
 <form id="f">
   <label>Class token</label><input name="token" id="token" required autocomplete="off">
   <label>Pair name (same for every upload)</label><input name="team" id="team" required>
   <label>Model name</label><input name="name" placeholder="cnn v2">
   <label>Notes: your validation split and accuracy, number of training takes</label>
   <input name="notes" placeholder="by-person val 0.91, n=1800">
+  <label>Labels in the order of your model's outputs (scikit-learn and <code>np.unique</code>: alphabetical)</label>
+  <input name="labels" id="labels" value="left,right,up,down,circle,idle" autocomplete="off">
   <label>model.onnx</label><input type="file" name="file" accept=".onnx" required>
   <button>Upload</button>
 </form>
@@ -54,7 +58,10 @@ $("f").addEventListener("submit", async ev => {
     const s = j.score || {};
     if (s.error) { $("out").className = "bad"; $("out").textContent = "Uploaded, but it could not be scored:\n" + s.error; return; }
     $("out").className = "ok";
-    if (s.check) { $("out").textContent = `Uploaded. The model runs (${s.ms.toFixed(2)} ms per take). Now open /live on your phone and pick it.`; return; }
+    const io = j.io ? `\nInput: ${j.io.layout} (${j.io.layout === "features" ? "30 features" : j.io.T + " time steps"}), ` +
+      `output: ${j.io.kind} for ${j.io.labels.join(", ")}` : "";
+    const warn = (s.warnings || []).map(w => "\nNote: " + w).join("");
+    if (s.check) { $("out").textContent = `Uploaded. The model runs (${s.ms.toFixed(2)} ms per take).${io}${warn}\nNow open /live on your phone and pick it.`; return; }
     $("out").textContent = `Accuracy on hidden people: ${s.acc.toFixed(3)} (${s.n} takes, ${s.ms.toFixed(2)} ms per take)\n` +
       Object.entries(s.per_class).map(([g, a]) => `  ${g}: ${a === null ? "-" : a.toFixed(2)}`).join("\n");
   } catch (e) { $("out").className = "bad"; $("out").textContent = "Upload failed: " + e.message; }
