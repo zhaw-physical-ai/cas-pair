@@ -10,15 +10,17 @@ No robot, no Jetson: a phone and a laptop are enough.
 1. **Record.** Scan the QR code on the projector with your phone, enter your name, and record
    15 takes per gesture.
 2. **Read the tasks:** [`GESTURES-TASK-DESCRIPTION.md`](GESTURES-TASK-DESCRIPTION.md).
-3. **Load the data** with [`load.py`](load.py), the only code you get:
+3. **Set up** a folder with [`load.py`](load.py) and the notebooks, and download the class data:
    ```
-   uv init && uv add numpy scikit-learn matplotlib torch
+   mkdir -p ~/repos/cas_26_YOUR_NAME/gestures && cd ~/repos/cas_26_YOUR_NAME/gestures
+   uv init && uv add numpy scikit-learn matplotlib torch jupyterlab
+   # copy load.py and notebooks/*.ipynb from this repo into this folder
    curl -o gestures.zip "<export link from the projector>"
+   uv run jupyter lab
    ```
-   ```python
-   from load import load, features
-   X, y, person = load("gestures.zip")   # X: (N, 100, 6), 2 s at 50 Hz, acc xyz + gyro xyz
-   ```
+4. **Work through the notebooks:** [`00_data`](notebooks/00_data.ipynb) to look at the data, then
+   [`01_classical`](notebooks/01_classical.ipynb) for tasks 1, 2, 3 and 5. For task 4 and the
+   advanced tasks, start your own notebook from the same `load()` call.
 
 ## What is here
 
@@ -26,6 +28,7 @@ No robot, no Jetson: a phone and a laptop are enough.
 |---|---|
 | [`GESTURES-TASK-DESCRIPTION.md`](GESTURES-TASK-DESCRIPTION.md) | the tasks, basic and advanced |
 | [`load.py`](load.py) | loads the class export into arrays; `features(X)` for a tabular start |
+| [`notebooks/`](notebooks/) | `00_data` (complete) and `01_classical` (setup given, experiments yours) |
 | [`sol/HINTS.md`](sol/HINTS.md) | hints per task, for when you are stuck |
 | [`collector/`](collector/) | the recording server and phone page (run by the instructor) |
 

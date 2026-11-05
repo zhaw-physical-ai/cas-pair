@@ -8,7 +8,9 @@ No model code is handed out, and coding agents are allowed. The human part is th
 collecting it, checking it, and **writing down your prediction before every experiment**. Keep
 these predictions in your notes, next to the result.
 
-What you get: [`load.py`](load.py), which turns the class export into arrays.
+What you get: [`load.py`](load.py), which turns the class export into arrays, and two notebooks
+in [`notebooks/`](notebooks/): `00_data` to look at the data, and `01_classical` with the setup for
+tasks 1, 2, 3 and 5. The experiments in it are yours.
 
 ## Task 0: Collect (pairs, ~25 min)
 1. Scan the QR code on the projector, or open the link, on your phone. Enter your name, the same
@@ -78,8 +80,8 @@ leave-one-person-out, number of training samples.
 - Set up the environment:
   ```
   mkdir -p ~/repos/cas_26_YOUR_NAME/gestures && cd ~/repos/cas_26_YOUR_NAME/gestures
-  uv init && uv add numpy scikit-learn matplotlib torch
-  # copy load.py from this repo into this folder
+  uv init && uv add numpy scikit-learn matplotlib torch jupyterlab
+  # copy load.py and notebooks/*.ipynb from this repo into this folder
   ```
 - Load the data with the export link from the projector:
   ```python
