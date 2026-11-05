@@ -82,7 +82,8 @@ def post_web(url, token, person, gesture, t, acc, gyr, ios, rng):
     alpha, beta, gamma = d[:, 2], d[:, 0], d[:, 1]
     r4 = lambda x: np.round(x, 4).tolist()
     body = {"token": token, "person": person, "gesture": gesture, "ios": ios,
-            "ua": "fake-iphone" if ios else "fake-android", "interval": 1000 * float(np.mean(np.diff(t))),
+            "ua": ("Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) fake" if ios
+                   else "Mozilla/5.0 (Linux; Android 14; K) Chrome/156.0 fake"), "interval": 1000 * float(np.mean(np.diff(t))),
             "t": r4(1000 * (t + rng.uniform(1000, 5000))),       # ms, arbitrary origin
             "accG": r4(a), "acc": r4(a - (G * np.array([0, 1, 0]))),
             "gyro": r4(np.stack([alpha, beta, gamma], 1))}

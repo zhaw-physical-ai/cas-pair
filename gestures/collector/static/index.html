@@ -73,8 +73,9 @@ const TARGET = 15, REC_MS = 2500;
 const $ = id => document.getElementById(id);
 const store = { get: k => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } },
                 set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
-const isIOS = typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function"
-  || /iPhone|iPad|iPod/.test(navigator.userAgent)
+// iOS reports accelerationIncludingGravity with the opposite sign. Detect it from the user agent:
+// current Chrome also has DeviceMotionEvent.requestPermission, so that is not an iOS marker.
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
   || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
 // ---- name + token ----

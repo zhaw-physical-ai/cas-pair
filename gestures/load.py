@@ -63,14 +63,25 @@ def _clean(a):
     return a
 
 
+def _is_ios(r):
+    """The user agent decides when it is clear; otherwise trust the page's flag (iPadOS reports
+    a Mac user agent). Early takes flagged Android Chrome as iOS, which this corrects."""
+    ua = r.get("ua") or ""
+    if any(k in ua for k in ("iPhone", "iPad", "iPod")):
+        return True
+    if "Android" in ua:
+        return False
+    return bool(r.get("ios"))
+
+
 def _parse_web(r):
     """Web DeviceMotion take -> t [s], (n,6) acc+gyro in phyphox/Android conventions."""
     t = np.array([np.nan if v is None else v for v in r["t"]], dtype=float) / 1000.0
     acc = _clean(r["accG"])
     a, b, g = _clean(r["gyro"]).T                      # rotationRate alpha, beta, gamma [deg/s]
     gyro = np.stack([b, g, a], axis=1) * DEG           # spec: beta about x, gamma about y, alpha about z
-    if r.get("ios"):
-        acc = -acc   # iOS Safari reports accelerationIncludingGravity with the opposite sign
+    if _is_ios(r):
+        acc = -acc   # iOS browsers report accelerationIncludingGravity with the opposite sign
     n = len(acc)
     # Degenerate timestamps (batched events): assume even spacing over the recording.
     if not np.isfinite(t).all() or len(np.unique(t)) < 0.5 * n or t[-1] - t[0] <= 0:
@@ -156,7 +167,7 @@ def load(src, window_s=2.0, fs=50, return_meta=False, verbose=True):
         y.append(r["gesture"])
         person.append(r["person"])
         meta.append({"id": r.get("id", name), "source": r.get("source", "web"),
-                     "ios": bool(r.get("ios")), "raw_hz": round(float(raw_hz), 1)})
+                     "ios": r.get("source", "web") == "web" and _is_ios(r), "raw_hz": round(float(raw_hz), 1)})
     if verbose:
         print(f"loaded {len(X)} takes from {len(set(person))} people", file=sys.stderr)
         if partial:
