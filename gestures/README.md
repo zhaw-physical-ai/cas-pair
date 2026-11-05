@@ -32,6 +32,7 @@ No robot, no Jetson: a phone and a laptop are enough.
 | [`load.py`](load.py) | loads the class export into arrays; `features(X)` for a tabular start |
 | [`notebooks/`](notebooks/) | `00_data` (complete) and `01_classical` (setup given, experiments yours) |
 | [`sol/HINTS.md`](sol/HINTS.md) | hints per task, for when you are stuck |
+| [`sol/`](sol/) | solutions: `01_data_baseline` and `02_neural_nets` notebooks, `reference.py` (all of tasks 1-4 in one run) |
 | [`sim/`](sim/) | the simulated SO-101 arm your live gestures drive (task 6) |
 | [`collector/`](collector/) | the server: phone page, upload, live page. Run by the instructor; to run your own, see [`collector/HOSTING.md`](collector/HOSTING.md) |
 
