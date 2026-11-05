@@ -33,6 +33,6 @@ No robot, no Jetson: a phone and a laptop are enough.
 | [`notebooks/`](notebooks/) | `00_data` (complete) and `01_classical` (setup given, experiments yours) |
 | [`sol/HINTS.md`](sol/HINTS.md) | hints per task, for when you are stuck |
 | [`sim/`](sim/) | the simulated SO-101 arm your live gestures drive (task 6) |
-| [`collector/`](collector/) | the server: phone page, upload, live page (run by the instructor) |
+| [`collector/`](collector/) | the server: phone page, upload, live page. Run by the instructor; to run your own, see [`collector/HOSTING.md`](collector/HOSTING.md) |
 
 Write down your prediction before every experiment. That part is not optional.

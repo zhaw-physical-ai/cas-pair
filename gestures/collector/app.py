@@ -359,8 +359,14 @@ def check_npz() -> Path | None:
         if len(per_g.setdefault(g, [])) < 10:
             per_g[g].append(p)
     files = [p for ps in per_g.values() for p in ps]
-    if not files:
-        return None
+    np = gload.np
+    if not files:   # empty server: still windows (phone upright), enough to see that the model runs
+        path = MODELS / "smoke.npz"
+        X = np.zeros((4, 100, 6), np.float32)
+        X[:, :, 1] = 9.81
+        X += np.random.default_rng(0).normal(0, 0.05, X.shape).astype(np.float32)
+        np.savez(path, X=X, y=np.full(4, GESTURES.index("idle")), kind="smoke")
+        return path
     path = MODELS / "check.npz"
     stamp = MODELS / "check.key"
     key = str(len(take_index()) // 50)
