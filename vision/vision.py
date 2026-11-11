@@ -155,7 +155,7 @@ class TextBoxer:
     """Grounding DINO: boxes from a text prompt, to feed SAM without drawing boxes yourself.
 
     boxer = TextBoxer()
-    boxes, scores = boxer(image, "a screwdriver.")   # lower case, end with a period
+    boxes, scores = boxer(image, "a laptop.")     # lower case, end with a period
     """
 
     def __init__(self, model_id="IDEA-Research/grounding-dino-tiny", device=None):
@@ -249,7 +249,7 @@ def yolo_predict(model, image, conf=0.25, device=None):
     return (r.masks.data.cpu().numpy() > 0.5, r.boxes.xyxy.cpu().numpy(), r.boxes.conf.cpu().numpy())
 
 
-# ---------- U-Net (task 3, advanced) ----------
+# ---------- U-Net (task 3) ----------
 class UNetSegmenter:
     """A U-Net with a pretrained ResNet-18 encoder for semantic segmentation (person / not person).
 
