@@ -1,0 +1,6 @@
+data/
+runs/
+yolo_*/
+my_photos*/
+*.pt
+*.onnx
