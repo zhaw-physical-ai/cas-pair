@@ -4,15 +4,19 @@ Short pointers, not solutions. Ask your coding agent for the code, then check th
 these hints say.
 
 ## Task 0: Setup
+
 - Colab: `File -> Open notebook -> GitHub`, paste this repo's URL, pick `vision/notebooks/...`.
   Then `Runtime -> Change runtime type -> T4 GPU` **before** you run anything.
 - `device: cpu` on Colab means you forgot the GPU runtime.
+- `WARNING: YOLO will crash on this GPU` from the first cell: `torchvision` has no code for
+  this GPU (seen on a Blackwell card on RunPod). Deploy another GPU, see `RUNPOD.md`.
 - `transformers` prints that a `sam2_video` checkpoint is loaded into `Sam2Model`. That is
   expected: SAM 2.1 checkpoints contain the video parts too, and we use only the image parts.
 - Everything downloaded lives in the runtime. A new Colab runtime starts empty, so the first cell
   downloads again.
 
 ## Task 1: SAM as a labeling tool
+
 - One person's human mask: `instances[i] == pid`. Its box: `boxes_from_instances(instances[i])`
   gives the boxes in the order of the ids 1, 2, ...
 - A click is `[x, y]` in pixels, x to the right, y down. `ys, xs = np.nonzero(mask)` gives every
@@ -25,6 +29,7 @@ these hints say.
 - `show(ax, image, mask, boxes=..., points=..., point_labels=...)` draws all of it.
 
 ## Task 2: Label the training set
+
 - One SAM call per image with all its boxes: `sam(images[i], boxes=boxes_from_instances(...))`
   returns one mask per box. Keep the `(n, H, W)` masks per image: YOLO needs one mask per
   person, `masks.any(0)` is the "any person" mask for IoU.
@@ -37,6 +42,7 @@ these hints say.
   A scatter plot of the two IoUs against the human masks shows it at a glance.
 
 ## Task 3: Train your own YOLO
+
 - `write_yolo_dataset(folder, images, masks)` with `masks` a list of `(n, H, W)` arrays, one per
   image. Human labels: `instances_to_masks(instances[i])`.
 - Use different folders and run names for SAM and human labels, or the second run overwrites
@@ -67,6 +73,7 @@ these hints say.
   the checkpoint is worth.
 
 ## Task 4: Ready for the robot?
+
 - `seconds_per_image(predict, images)` does a warm-up call first: the first call is always slow.
   For SAM, time the labeling of one image with its boxes; and remember that someone had to draw
   those boxes.
@@ -82,8 +89,13 @@ these hints say.
   not work here: in Penn-Fudan almost everyone is photographed full-length.
 
 ## Task 5: Your own object
+
 - Colab: zip your photos, upload the zip in the file panel (left), then
   `!unzip -q photos.zip -d my_photos`. RunPod: drag the files into the Jupyter file browser.
+- Two folders next to the notebook: `my_photos/` (training) and `my_photos_test/` (test).
+  `load_folder` reads only `.jpg`, `.jpeg` and `.png` directly in the folder, not in subfolders:
+  `unzip -j` flattens a zip, and iPhone `.HEIC` photos must be converted first (or set
+  `Settings -> Camera -> Formats -> Most Compatible` before taking them).
 - Text prompt: lower case, one noun phrase, end with a period: `"a laptop."`. If it finds
   too much or too little, change `threshold` (0.2-0.5) or the words (`"an open laptop."`).
 - One object per photo is the easy case: keep only the box with the highest score.
