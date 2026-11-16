@@ -1,7 +1,8 @@
 # High level task description for tb3
 
-A TurtleBot3 Burger: a small differential-drive robot with a 360° 2D lidar. You write a ROS 2
-node that lets it wander - first in Gazebo, then, optionally, on a real robot in class.
+A TurtleBot3: a small differential-drive robot with a 360° 2D lidar. You write a ROS 2 node
+that lets it wander - first a Burger in Gazebo, then, optionally, a real Burger or Waffle Pi in
+class. Both have the same lidar and the same interfaces, so the same node drives either.
 
 This is the lab of Session 1 (packages and first nodes). Everything you need was in this
 morning's slides: a package, a publisher, a subscriber, a timer, sensor QoS, parameters and a
@@ -16,11 +17,12 @@ launch file. There is no skeleton: you design the node.
 
 **`TwistStamped`, not `Twist`.** On Jazzy the simulated TurtleBot3 takes `TwistStamped`; the
 slides show `Twist`. A `Twist` publisher on `/cmd_vel` never connects to the robot, and your
-node reports no error - the robot just does not move. The velocities are in `msg.twist`; fill in `msg.header.stamp` as well. A real
-TurtleBot3 can be configured for either type: check with `ros2 topic info /cmd_vel` before you
-drive one.
+node reports no error - the robot just does not move. The velocities are in `msg.twist`; fill
+in `msg.header.stamp` as well. Our real TurtleBot3s (Jazzy) take `TwistStamped` too, so the
+same node drives both.
 
-Units are SI. The Burger's top speeds are 0.22 m/s and 2.84 rad/s; stay well below them.
+Units are SI. Top speeds: Burger 0.22 m/s and 2.84 rad/s, Waffle Pi 0.26 m/s and 1.82 rad/s.
+Stay well below them.
 
 ## Task 0: Simulator up
 
@@ -89,14 +91,17 @@ Hints:
 
 ## Task 3: The real robot (optional)
 
-Only from a RAP pod on the ZHAW cluster: RunPod cannot reach the robots.
+The same package, on a real robot. Your RunPod pod cannot reach the robots - they are on the
+ZHAW network, which accepts no connections from outside - so you drive them from inside ZHAW.
+**How you connect is explained in class**; push your package to your own repo before, so you
+can clone it there.
 
 Basic:
-- ask for a robot. The lab assistant sets it to your group's `ROS_DOMAIN_ID`
-- in every terminal you use for the robot: source `set_remote_robot.sh` from
-  [RAP_BUILD_LAB](https://github.zhaw.ch/RAP-EN/RAP_BUILD_LAB) and export your
-  `ROS_DOMAIN_ID`. `ros2 node list` then shows the robot's nodes
-- check the type of `/cmd_vel` on the robot, then run your launch file
+- you get a robot and a group number. The group number is your `ROS_DOMAIN_ID`
+- build your package there as on RunPod: clone, `colcon build --symlink-install`,
+  `source install/setup.bash`
+- `ros2 node list` shows the robot's nodes (`turtlebot3_node`, `hlds_laser_publisher`, ...).
+  Then run your launch file - the robot takes `TwistStamped`, like the simulation
 
 Safety:
 - **test "Stop" in simulation first.** A node that does not stop on exit leaves the robot

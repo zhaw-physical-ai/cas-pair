@@ -20,11 +20,18 @@ export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST # ROS discovery stays inside the 
   echo "TurtleBot3 is still installing - tail -f /tmp/tb3-install.log, then open a new terminal"
 EOF
 
+# Retried: the first index fetched at pod start can be stale (seen 2026-11-16: an install
+# that asked for package versions no longer on packages.ros.org, 404). A second update fixes it.
 (
-  sudo apt-get -o DPkg::Lock::Timeout=300 update -qq &&
-  sudo apt-get -o DPkg::Lock::Timeout=300 install -y -qq \
-    ros-jazzy-turtlebot3-gazebo ros-jazzy-turtlebot3-teleop &&
-  echo "=== tb3: TurtleBot3 installed"
+  for try in 1 2 3; do
+    sudo apt-get -o DPkg::Lock::Timeout=300 update -qq &&
+    sudo apt-get -o DPkg::Lock::Timeout=300 install -y -qq \
+      ros-jazzy-turtlebot3-gazebo ros-jazzy-turtlebot3-teleop &&
+    { echo "=== tb3: TurtleBot3 installed"; exit 0; }
+    echo "=== tb3: install attempt $try failed, retrying in 10 s"
+    sleep 10
+  done
+  echo "=== tb3: install FAILED - run: sudo apt-get update && sudo apt-get install -y ros-jazzy-turtlebot3-gazebo ros-jazzy-turtlebot3-teleop"
 ) > /tmp/tb3-install.log 2>&1 &
 
 curl -fsSL https://raw.githubusercontent.com/zhaw-physical-ai/cas-pair/main/summit/runpod_start.sh | bash

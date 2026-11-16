@@ -65,10 +65,13 @@ And check that the node reads the parameter, not a constant.
 
 ## Task 3 - the real robot
 
-- `ros2 node list` empty: wrong `ROS_DOMAIN_ID`, `set_remote_robot.sh` not sourced in this
-  terminal, or the robot is not up yet.
-- The robot does not move but the simulation did: check the `/cmd_vel` type on the robot. The
-  reference package takes `stamped:=false` for a robot that wants `Twist`.
+- `ros2 node list` empty: a wrong `ROS_DOMAIN_ID`, a terminal set up before you changed it
+  (open a new one, or `ros2 daemon stop`), or the robot is not up yet. Check with
+  `env | grep -E 'RMW|ZENOH|ROS_DOMAIN'`.
+- You tried from RunPod: it cannot work. The ZHAW network accepts no connections from
+  outside, so the robots are reached from inside ZHAW only.
+- The robot does not move: is another node publishing on `/cmd_vel` (`ros2 topic info
+  /cmd_vel`)? Teleop left running in another terminal holds it too.
 
 ## The reference package
 

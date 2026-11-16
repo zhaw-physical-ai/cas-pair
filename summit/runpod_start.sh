@@ -22,7 +22,7 @@ sudo sed -i '/-noshm/!s/-rfbport 5900/-noshm -rfbport 5900/' /etc/entrypoint.sh
   echo "=== summit: GPU Xorg failed. Errors from /var/log/Xorg.0.log:"
   grep -E '\(EE\)|NVIDIA\(' /var/log/Xorg.0.log | head -30
   echo "=== summit: starting Xvfb on :0 instead (software rendering)"
-  sudo apt-get update -qq && sudo apt-get install -y -qq xvfb >/dev/null
+  sudo apt-get -o DPkg::Lock::Timeout=300 update -qq && sudo apt-get -o DPkg::Lock::Timeout=300 install -y -qq xvfb >/dev/null
   Xvfb :0 -screen 0 1920x1080x24 +extension GLX -nolisten tcp -ac &
 ) &
 

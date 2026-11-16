@@ -6,12 +6,13 @@ is the same procedure with a different template.
 
 If you have a RAP pod on the ZHAW cluster, you can use that instead: install the TurtleBot3
 packages there with `sudo apt install ros-jazzy-turtlebot3-gazebo ros-jazzy-turtlebot3-teleop`
-and continue at **Launch**. Only the RAP pod can reach the real robots.
+and continue at **Launch**. The real robots (Task 3) are not reachable from RunPod: they are
+on the ZHAW network, which accepts no connections from outside.
 
 ## Open the desktop
 
 1. Open the template, logged in to your own RunPod account, and click **Configure Pod**:
-   TODO-TEMPLATE-LINK
+   https://console.runpod.io/hub/template/ew4zbalm4l?ref=vc5f9d3q
 
 2. Follow steps 2-7 of [`../summit/SUMMIT-SIM.md`](../summit/SUMMIT-SIM.md#open-the-desktop):
    pod name with your name in it, your own `PASSWD`, a GPU, a 10 GB **volume disk** (it
@@ -39,6 +40,10 @@ Each command in its **own** terminal.
    ```
 
    Check: `ros2 topic hz /scan` shows about 5 Hz.
+
+   Two kinds of warnings in this terminal are harmless: `libEGL warning: failed to open
+   /dev/dri/... Permission denied` (Gazebo renders through the desktop instead) and
+   `gz_frame_id ... not defined in SDF` (from the TurtleBot3 model file).
 
 2. Drive by hand once, to see which way is forward and what the scan sees:
 
@@ -85,7 +90,7 @@ is sluggish in software. The simulation itself is not affected: `/scan` keeps it
 | Environment | `PASSWD` = `change-me`, as for Summit: each student sets their own at deploy |
 | Container disk | 30 GB |
 | Volume disk | 10 GB at `/home/ros/rap`, added by each student |
-| GPU | NVIDIA only: the image stops without one |
+| GPU | NVIDIA only: the image stops without one. Tested on the RTX PRO 4500 Blackwell Server Edition (16 Nov 2026): GPU rendering, `/scan` at 4.7 Hz, real-time factor about 96 % |
 
 The start script is fetched from `main` on GitHub at every pod start: a change takes effect on
 the next start, and only once it is pushed. To skip the install wait, bake the two packages

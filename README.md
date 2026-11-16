@@ -9,6 +9,7 @@ The robot labs run on a Jetson Orin Nano with a screen, keyboard and mouse - one
 The Summit simulation runs in your browser on RunPod instead; see [`summit/`](summit/).
 The gestures lab needs only your phone and laptop; see [`gestures/`](gestures/).
 The vision lab runs on Google Colab or a RunPod GPU pod; see [`vision/`](vision/).
+The TurtleBot3 lab runs in Gazebo on a RunPod GPU pod or your RAP pod; see [`tb3/`](tb3/).
 
 **[`JETSONS-SETUP.md`](JETSONS-SETUP.md)** - which machine is yours, how to reach it, what is
 already on it, and how to shut it down. Read this before either lab.
@@ -21,6 +22,7 @@ already on it, and how to shut it down. Read this before either lab.
 | **[`so101/`](so101/)** | the arm pair: teleoperation, imitation learning, and ROS control |
 | **[`summit/`](summit/)** | the Summit XL mobile manipulator in simulation: Gazebo, Nav2 and MoveIt in the browser |
 | **[`gestures/`](gestures/)** | supervised learning on your phone's IMU: collect gestures as a class, then train and compare classifiers and small neural nets |
+| **[`tb3/`](tb3/)** | your first ROS 2 package: a TurtleBot3 that wanders, avoids obstacles and stops when its sensor is lost - in Gazebo, then on a real robot |
 | **[`vision/`](vision/)** | label images with a foundation model (SAM 2.1), train your own YOLO segmenter on the labels, and check it is good and fast enough for a robot |
 
 Each folder has a task description, and a `sol/` folder with hints and commands for when you
