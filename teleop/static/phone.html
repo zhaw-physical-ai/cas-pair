@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SO-101 remote</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --fg: #1d2530; --mute: #4a5568; --line: #cbd5e0; --accent: #2b6cb0; --ok: #2f855a; --bad: #c53030; --rec: #e53e3e; }
+  [hidden] { display: none !important; }
+  * { box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  html, body { margin: 0; height: 100%; background: #f4f6f9; color: var(--fg);
+    font: 17px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; touch-action: none; overflow: hidden; }
+  main { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); }
+  header { display: flex; justify-content: space-between; align-items: baseline; }
+  header b { font-size: 18px; } #conn { font-size: 14px; } #conn.ok { color: var(--ok); } #conn.bad { color: var(--bad); }
+  button { font: inherit; border: none; border-radius: 14px; padding: 14px; background: #fff; color: var(--fg);
+    box-shadow: 0 1px 3px rgba(0,0,0,.15); touch-action: none; }
+  button:disabled { opacity: .4; }
+  .row { display: flex; gap: 10px; } .row > * { flex: 1; }
+  .tabs button { padding: 10px; } .tabs button.on { background: var(--accent); color: #fff; }
+  #pad { flex: 1; min-height: 160px; position: relative; display: flex; align-items: center; justify-content: center;
+    background: #fff; border-radius: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.15); text-align: center; color: var(--mute); }
+  #pad.active { background: #ebf4ff; color: var(--accent); }
+  #pad .big { font-size: 22px; font-weight: 600; } #pad .small { font-size: 14px; margin-top: 6px; }
+  #sliders { flex: 1; min-height: 200px; display: flex; flex-direction: column; gap: 10px; }
+  .track { position: relative; background: #e2e8f0; border-radius: 40px; touch-action: none; color: var(--mute); font-size: 14px; }
+  .track::after { content: ""; position: absolute; background: #a0aec0; }   /* centre mark: speed 0 */
+  #hTrack { height: 72px; } #hTrack::after { left: 50%; top: 12px; bottom: 12px; width: 2px; }
+  #vTrack { flex: 1; width: 96px; align-self: center; } #vTrack::after { top: 50%; left: 12px; right: 12px; height: 2px; }
+  .track .lab { position: absolute; pointer-events: none; }
+  #hTrack .a { left: 18px; top: 50%; transform: translateY(-50%); } #hTrack .b { right: 18px; top: 50%; transform: translateY(-50%); }
+  #vTrack .a { top: 14px; left: 0; right: 0; text-align: center; } #vTrack .b { bottom: 14px; left: 0; right: 0; text-align: center; }
+  .knob { position: absolute; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%;
+    background: var(--accent); opacity: .9; left: 50%; top: 50%; pointer-events: none; }
+  .track.held { background: #ebf4ff; }
+  .height button { font-size: 20px; padding: 16px; } .height button.held { background: #ebf4ff; }
+  #grip { font-size: 20px; font-weight: 600; padding: 18px; }
+  #grip.open { background: #fefcbf; }
+  #recbar button { font-weight: 600; } #start { background: var(--rec); color: #fff; }
+  #save { background: var(--ok); color: #fff; }
+  #recinfo { text-align: center; font-size: 14px; color: var(--mute); min-height: 1.4em; }
+  #recinfo.on { color: var(--rec); font-weight: 700; }
+  #wait { position: fixed; inset: 0; background: rgba(244,246,249,.97); padding: 24px; display: flex; flex-direction: column;
+    gap: 16px; justify-content: center; text-align: center; }
+  #wait .who { font-size: 24px; font-weight: 600; } #wait p { margin: 0; color: var(--mute); }
+  #wait button { background: var(--accent); color: #fff; font-size: 20px; font-weight: 600; }
+  #setup { position: fixed; inset: 0; background: #f4f6f9; padding: 24px; display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+  #setup h1 { font-size: 24px; margin: 0; } #setup p { margin: 0; color: var(--mute); }
+  #setup input { font: inherit; font-size: 20px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; -webkit-user-select: text; user-select: text; }
+  #setup button { background: var(--accent); color: #fff; font-size: 20px; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <header><b>SO-101 remote</b><span id="conn" class="bad">connecting ...</span></header>
+  <div class="row tabs"><button id="tTilt" class="on">Tilt the phone</button><button id="tStick">Sliders</button></div>
+  <div id="pad"><div><div class="big" id="padBig"></div><div class="small" id="padSmall"></div></div></div>
+  <div id="sliders" hidden>
+    <div class="track" id="hTrack"><span class="lab a">◀ turn left</span><span class="lab b">turn right ▶</span><div class="knob"></div></div>
+    <div class="track" id="vTrack"><span class="lab a">▲ reach out</span><span class="lab b">▼ pull in</span><div class="knob"></div></div>
+  </div>
+  <div class="row height"><button id="down">▼ lower</button><button id="up">▲ raise</button></div>
+  <button id="grip">Open gripper</button>
+  <div class="row" id="recbar"><button id="start">● Start recording</button>
+    <button id="save" hidden>✓ Save</button><button id="discard" hidden>✕ Discard</button></div>
+  <div id="recinfo"></div>
+</main>
+<div id="wait" hidden>
+  <div class="who" id="who"></div>
+  <p>Only one phone steers the arm at a time.</p>
+  <button id="takeover">Take over</button>
+</div>
+<div id="setup">
+  <h1>SO-101 remote</h1>
+  <p>Your phone steers the robot arm on the big screen.</p>
+  <input id="name" placeholder="Your first name or a nickname" maxlength="30" autocomplete="off">
+  <button id="go">Start</button>
+  <p style="font-size:14px">Hold the phone upright in portrait, screen towards you.</p>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const room = new URLSearchParams(location.search).get("room") || "";
+const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
+let ws = null, mode = "tilt", vp = 0, vr = 0, vz = 0, active = false, open = false, recording = false;
+
+// ---- connection ----
+function send(m) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); }
+function connect() {
+  ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/${encodeURIComponent(room)}/phone`);
+  ws.onmessage = e => {
+    const m = JSON.parse(e.data);
+    if (m.type === "presence") {
+      $("conn").textContent = m.views ? `connected to room ${room}` : `room ${room}: screen not open`;
+      $("conn").className = m.views ? "ok" : "bad";
+      $("wait").hidden = m.you_steer;
+      if (!m.you_steer) {
+        release(); for (const t of ["hTrack", "vTrack"]) $(t).dispatchEvent(new PointerEvent("pointercancel"));
+        vz = 0;
+        $("who").textContent = m.controller ? `${m.controller} is steering` : "Nobody is steering";
+        $("takeover").textContent = m.controller ? "Take over" : "Start steering";
+      }
+    } else if (m.type === "status") {
+      open = m.open; showGrip();
+      recording = m.recording;
+      $("start").hidden = recording; $("save").hidden = $("discard").hidden = !recording;
+      $("recinfo").className = recording ? "on" : "";
+      $("recinfo").textContent = recording ? `● recording ${m.seconds.toFixed(1)} s${m.success ? " · cube on target!" : ""}`
+        : `${m.message ? m.message + " · " : ""}episodes saved: ${m.episodes}`;
+    }
+  };
+  ws.onopen = () => send({ type: "hello", name: localStorage.getItem("name") || "someone" });
+  ws.onclose = () => { $("conn").textContent = "reconnecting ..."; $("conn").className = "bad"; setTimeout(connect, 1500); };
+}
+
+// ---- send the velocities 20 times a second while something is pressed ----
+setInterval(() => { if (active || vz) send({ type: "cmd", vp, vr, vz }); }, 50);
+function stop() { vp = vr = 0; send({ type: "cmd", vp, vr, vz }); }
+
+// ---- tilt mode: hold the pad, tilt left/right to turn, forward/back to reach ----
+let ref = null, orient = null;
+window.addEventListener("deviceorientation", e => { orient = e; });
+const axis = deg => Math.sign(deg) * clamp((Math.abs(deg) - 5) / 25, 0, 1);   // 5° dead zone, full speed at 30°
+setInterval(() => {
+  if (mode !== "tilt" || !active || !orient || !ref) return;
+  vp = axis(orient.gamma - ref.gamma);              // tilt right -> turn right
+  vr = axis(-(orient.beta - ref.beta));             // top edge away from you -> reach out
+  $("padSmall").textContent = `turn ${(vp * 100).toFixed(0)}% · reach ${(vr * 100).toFixed(0)}%`;
+}, 50);
+async function askMotion() {   // iOS asks for permission, after a tap
+  if (typeof DeviceOrientationEvent !== "undefined" && DeviceOrientationEvent.requestPermission) {
+    try { return (await DeviceOrientationEvent.requestPermission()) === "granted"; } catch { return false; }
+  }
+  return true;
+}
+
+// ---- slider mode: one bar per direction, so turn and reach never mix by accident ----
+// Each bar springs back to the middle (speed 0) when let go. Both can be used at once (two thumbs).
+const held = { h: false, v: false };
+function slider(track, key, horizontal) {
+  const knob = track.querySelector(".knob");
+  const move = e => {
+    const r = track.getBoundingClientRect(), half = (horizontal ? r.width : r.height) / 2 - 30;
+    const d = clamp(horizontal ? e.clientX - (r.left + r.width / 2) : e.clientY - (r.top + r.height / 2), -half, half);
+    knob.style[horizontal ? "left" : "top"] = `calc(50% + ${d}px)`;
+    const v = d / half, s = Math.abs(v) < 0.12 ? 0 : v;   // small dead zone around the middle
+    if (horizontal) vp = s; else vr = -s;                  // up on the screen = reach out
+  };
+  track.addEventListener("pointerdown", e => {
+    e.preventDefault(); track.setPointerCapture(e.pointerId); held[key] = true; active = true;
+    track.classList.add("held"); move(e);
+  });
+  track.addEventListener("pointermove", e => { if (held[key]) move(e); });
+  const up = () => {
+    if (!held[key]) return;
+    held[key] = false; active = held.h || held.v; track.classList.remove("held");
+    knob.style[horizontal ? "left" : "top"] = "50%";
+    if (horizontal) vp = 0; else vr = 0;
+    send({ type: "cmd", vp, vr, vz });
+  };
+  track.addEventListener("pointerup", up); track.addEventListener("pointercancel", up);
+}
+slider($("hTrack"), "h", true);
+slider($("vTrack"), "v", false);
+
+// ---- tilt mode: hold the pad ----
+const pad = $("pad");
+pad.addEventListener("pointerdown", e => {
+  e.preventDefault(); pad.setPointerCapture(e.pointerId); active = true; pad.classList.add("active");
+  ref = orient && { beta: orient.beta, gamma: orient.gamma };
+  if (!ref) $("padSmall").textContent = "no motion sensor: use the sliders";
+});
+const release = () => { if (!active || mode !== "tilt") return; active = false; pad.classList.remove("active"); stop(); showPad(); };
+pad.addEventListener("pointerup", release); pad.addEventListener("pointercancel", release);
+
+function showPad() {
+  $("padBig").textContent = "Hold here and tilt the phone";
+  $("padSmall").textContent = "left / right: turn · forward / back: reach";
+}
+function setMode(m) {
+  release();
+  mode = m; $("tTilt").classList.toggle("on", m === "tilt"); $("tStick").classList.toggle("on", m === "stick");
+  $("pad").hidden = m !== "tilt"; $("sliders").hidden = m === "tilt"; showPad();
+}
+$("tTilt").onclick = async () => { await askMotion(); setMode("tilt"); };
+$("tStick").onclick = () => setMode("stick");
+
+// ---- height: hold the buttons ----
+for (const [id, v] of [["up", 1], ["down", -1]]) {
+  const b = $(id);
+  b.addEventListener("pointerdown", e => { e.preventDefault(); b.setPointerCapture(e.pointerId); vz = v; b.classList.add("held"); });
+  const up = () => { if (vz === v) { vz = 0; send({ type: "cmd", vp, vr, vz }); } b.classList.remove("held"); };
+  b.addEventListener("pointerup", up); b.addEventListener("pointercancel", up);
+}
+
+// ---- gripper and recording ----
+function showGrip() { $("grip").textContent = open ? "Close gripper" : "Open gripper"; $("grip").classList.toggle("open", open); }
+$("grip").onclick = () => { open = !open; showGrip(); send({ type: "gripper", open }); };
+$("start").onclick = () => send({ type: "record", action: "start", name: localStorage.getItem("name") || "anon" });
+$("save").onclick = () => send({ type: "record", action: "save" });
+$("discard").onclick = () => send({ type: "record", action: "discard" });
+$("takeover").onclick = () => send({ type: "takeover" });
+document.addEventListener("contextmenu", e => e.preventDefault());
+
+// ---- start ----
+$("name").value = localStorage.getItem("name") || "";
+$("go").onclick = async () => {
+  localStorage.setItem("name", $("name").value.trim() || "anon");
+  const motion = await askMotion();
+  setMode(motion ? "tilt" : "stick");
+  $("setup").remove();
+  connect();
+};
+if (!room) { $("setup").innerHTML = "<h1>No room</h1><p>Scan the QR code on the big screen.</p>"; }
+showPad(); showGrip();
+</script>
+</body>
+</html>

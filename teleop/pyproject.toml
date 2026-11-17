@@ -1,0 +1,13 @@
+[project]
+name = "so101-phone-teleop"
+version = "0.1.0"
+description = "Teleoperate a simulated SO-101 arm with a phone and record demonstrations"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "segno>=1.6",
+]
+
+[tool.uv]
+package = false

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SO-101 phone teleop</title>
+<link rel="icon" href="data:,">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.178.0/examples/jsm/",
+    "mujoco": "https://cdn.jsdelivr.net/npm/@mujoco/mujoco@3.17.0/mujoco.js"
+  }
+}
+</script>
+<style>
+  :root { --fg: #1d2530; --panel: rgba(255,255,255,.9); --ok: #2f855a; --bad: #c53030; --rec: #e53e3e; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #dde4ec; color: var(--fg);
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #view { position: fixed; inset: 0; }
+  #view canvas { display: block; touch-action: none; }
+  .panel { position: fixed; background: var(--panel); border-radius: 10px; padding: 12px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  #info { top: 16px; left: 16px; max-width: 340px; }
+  #info h1 { font-size: 20px; margin: 0 0 6px; }
+  #phone.ok { color: var(--ok); font-weight: 600; } #phone.bad { color: var(--bad); }
+  #rec { margin-top: 8px; font-size: 22px; font-weight: 700; }
+  #rec.on { color: var(--rec); }
+  #goal { margin-top: 6px; color: #4a5568; } #goal.done { color: var(--ok); font-weight: 700; }
+  #count, #warn { margin-top: 6px; font-size: 14px; color: #4a5568; } #warn { color: var(--bad); }
+  [hidden] { display: none !important; }
+  /* QR code: big in the middle until a phone steers, then folded into the "QR" button */
+  #join { top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+  #join img { width: min(60vw, 55vh, 300px); height: min(60vw, 55vh, 300px); display: block; margin: 8px auto; }
+  #join .code { font-size: 28px; font-weight: 700; letter-spacing: 4px; }
+  #join .url { font-size: 12px; color: #4a5568; word-break: break-all; max-width: 300px; margin: 0 auto; }
+  #join .hint { font-size: 13px; color: #4a5568; margin-top: 6px; }
+  #qrbtn { top: 16px; right: 16px; font: inherit; font-weight: 600; border: none; cursor: pointer; }
+  /* small screens (a phone used as the screen): one compact status bar at the top */
+  @media (max-width: 600px), (max-height: 500px) {
+    #info { top: 8px; left: 8px; right: 70px; max-width: none; padding: 6px 10px; font-size: 13px; }
+    #info h1, #count, #join .url { display: none; }
+    #rec { margin-top: 2px; font-size: 15px; } #goal, #warn { margin-top: 2px; }
+    #qrbtn { top: 8px; right: 8px; padding: 8px 10px; }
+  }
+  #loading { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  #loading.error { color: var(--bad); }
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div id="info" class="panel">
+  <h1>SO-101 phone teleop</h1>
+  <div id="phone" class="bad">no phone connected</div>
+  <div id="rec">not recording</div>
+  <div id="goal"></div>
+  <div id="count"></div>
+  <div id="warn"></div>
+</div>
+<div id="join" class="panel">
+  <div>Scan this with the phone that will steer</div>
+  <img id="qr" alt="QR code">
+  <div>room <span class="code" id="code"></span></div>
+  <div class="url" id="url"></div>
+  <div class="hint">tap to hide</div>
+</div>
+<button id="qrbtn" class="panel" hidden>QR</button>
+<div id="loading" class="panel">loading ...</div>
+<script type="module" src="/static/view.js"></script>
+</body>
+</html>
