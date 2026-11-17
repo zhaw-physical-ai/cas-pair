@@ -73,6 +73,14 @@ And check that the node reads the parameter, not a constant.
 - The robot does not move: is another node publishing on `/cmd_vel` (`ros2 topic info
   /cmd_vel`)? Teleop left running in another terminal holds it too.
 
+- Lichtblick connects to nothing: terminal 2 (bridge) or 3 (tunnel) is not running, or the
+  tunnel was opened to another robot. `ws://localhost:8765` only works while both run.
+- The tunnel says `Address already in use`: an old tunnel still runs - close it, or use
+  another port on your laptop: `-L 8766:127.0.0.1:8765` and `ws://localhost:8766`.
+- The 3D panel stays empty: **Display frame** is not `odom`, the eye on `/scan` is off, or the
+  view is far from the robot - zoom in on `odom`. A panel that says "Waiting for first GPS
+  point" is the **Map** panel, the wrong one.
+
 ## The reference package
 
 ```

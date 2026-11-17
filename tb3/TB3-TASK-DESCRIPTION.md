@@ -138,6 +138,49 @@ Safety:
 Advanced:
 - the real lidar sees things the simulated one does not: chair legs, black surfaces, glass,
   people's feet. Which acceptance test fails first, and why?
+- watch what the robot sees, on your laptop - see below
+
+### Advanced: watch it on your laptop
+
+The robot has no screen, and your RunPod pod cannot reach it. So the scan goes to your laptop:
+a bridge on the robot serves the ROS topics as a WebSocket, an ssh tunnel brings it to your
+laptop, and [Lichtblick](https://github.com/lichtblick-suite/lichtblick) shows it - an
+open-source viewer like RViz, no ROS and no account needed on the laptop. Install it from its
+[releases](https://github.com/lichtblick-suite/lichtblick/releases) (`.deb`, `.dmg` or `.exe`).
+
+Four terminals - 1 and 2 are two separate `ssh cas@<robot>` logins:
+
+| | where | command |
+|---|---|---|
+| 1 | robot, as `cas` | your node: `ros2 launch <your package> <your launch file>` |
+| 2 | robot, as `cas` | the bridge: `ros2 launch foxglove_bridge foxglove_bridge_launch.xml address:=127.0.0.1` |
+| 3 | laptop | the tunnel: `ssh -N -L 8765:127.0.0.1:8765 cas@<robot>` |
+| 4 | laptop | Lichtblick |
+
+- Terminal 2 ends with `Server listening on port 8765`. `address:=127.0.0.1` keeps the bridge
+  reachable from the robot itself only - not from the whole ZHAW wifi.
+- Terminal 3 forwards port 8765 on your laptop through ssh to the bridge on the robot. After the
+  password it shows nothing and seems to hang: that is the tunnel, open. Leave it. `ssh` is the
+  same in the macOS terminal and in Windows PowerShell.
+
+In Lichtblick:
+1. **Open connection** → **Foxglove WebSocket** → `ws://localhost:8765` → **Open**.
+2. Add a **3D** panel (or change an existing one: its **⋮** → **Change panel** → **3D**), and
+   enlarge it with the **⛶** in its header. Not the **Map** panel: that one is for GPS.
+3. The **⚙** in the 3D panel's header opens its settings in the left sidebar - check that it
+   says **3D panel** at the top:
+   - **Frame → Display frame:** `odom`
+   - **Topics:** the eye on `/scan` and `/robot_description`
+   - click `/scan`: **Point size** `5`
+4. Zoom with the mouse wheel to the robot. **3D** in the panel's toolbar switches to a top view.
+
+You see the robot and its scan around it, live. Then set **Decay time** of `/scan` to `30`:
+the old scans stay, and while your random walk drives they draw the room. After a minute the
+walls usually blur - the odometry drifts, worst in turns. That is why real robots build their map
+with SLAM, which corrects the drift by matching the scans against each other.
+
+A value of `0` in `/scan`'s `ranges` is below `range_min`: an invalid reading, usually no echo
+in that direction. Lichtblick does not draw it.
 
 ## Task 4: Go further (optional)
 
