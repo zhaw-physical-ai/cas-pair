@@ -17,7 +17,7 @@ coding agents and maintainers: [`CLAUDE.md`](CLAUDE.md).
 Needs [`uv`](https://docs.astral.sh/uv/) and `cloudflared` (`brew install cloudflared`).
 
 ```
-cd teleop
+cd nursing-teleop
 TOKEN=<a word> ./serve.sh                          # terminal 1
 cloudflared tunnel --url http://localhost:8001      # terminal 2: prints https://....trycloudflare.com
 ```

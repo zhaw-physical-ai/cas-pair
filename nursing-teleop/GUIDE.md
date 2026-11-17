@@ -27,7 +27,7 @@ your laptop sleeps or goes offline, every group stops.
 ### Start of class (about 5 minutes)
 1. **Terminal 1: start the server.** Choose a word for `TOKEN`: it protects the data download.
    ```
-   cd cas-pair/teleop
+   cd cas-pair/nursing-teleop
    TOKEN=<your word> ./serve.sh
    ```
    If it says `address already in use`, another server is still running on port 8001: stop it, or
