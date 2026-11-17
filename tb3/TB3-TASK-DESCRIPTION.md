@@ -89,25 +89,51 @@ Hints:
 - stopping on `Ctrl+C` is harder than it looks: by default ROS shuts down before your
   `finally` runs, and a publish there goes nowhere
 
-## Task 3: The real robot (optional)
+## Task 3: The real robot
 
-The same package, on a real robot. Your RunPod pod cannot reach the robots - they are on the
-ZHAW network, which accepts no connections from outside - so you drive them from inside ZHAW.
-**How you connect is explained in class**; push your package to your own repo before, so you
-can clone it there.
+The same package, on a real robot. Your node runs **on the robot itself**: you log in to its
+Raspberry Pi over ssh, build your package there and start it. The robot's own nodes (motors,
+lidar) are already running - you start only yours.
 
-Basic:
-- you get a robot and a group number. The group number is your `ROS_DOMAIN_ID`
-- build your package there as on RunPod: clone, `colcon build --symlink-install`,
-  `source install/setup.bash`
-- `ros2 node list` shows the robot's nodes (`turtlebot3_node`, `hlds_laser_publisher`, ...).
-  Then run your launch file - the robot takes `TwistStamped`, like the simulation
+When your node works in the simulation, **push it to GitHub** - a fork of cas-pair or a repo
+of your own, either works. The robot gets it from there with `git clone`
+
+**Show your teacher your random walk passing Task 2's acceptance tests in the simulation.**
+Then you get a robot name and the password for the user `cas`. Your laptop on the ZHAW
+wifi:
+
+1. Log in:
+   ```
+   ssh cas@<robot>
+   ```
+   `cas` has no sudo: you cannot install anything, and you do not need to. ROS 2 and the
+   robot's settings are loaded at login.
+2. Check that you see the robot:
+   ```
+   ros2 node list           # turtlebot3_node, diff_drive_controller, hlds_laser_publisher, robot_state_publisher
+   ros2 topic hz /scan      # about 5 Hz, Ctrl+C to end
+   ```
+3. Your workspace - one per group, in a folder with your group's name, so you do not build
+   over the others:
+   ```
+   mkdir -p ~/<group>/src && cd ~/<group>/src
+   git clone <your fork or repo>
+   cd ~/<group> && colcon build --symlink-install
+   source install/setup.bash
+   ```
+4. Start your launch file with half your speeds and watch which
+   way the wheels turn. Ctrl+C: they must stop at once.
+
+
+Each new terminal: `cd ~/<group> && source install/setup.bash`. A fix: change it on RunPod,
+push, then `git pull` and `colcon build` on the robot.
 
 Safety:
 - **test "Stop" in simulation first.** A node that does not stop on exit leaves the robot
   driving its last command
-- start with the robot lifted off the floor, wheels free, and watch which way they turn
-- halve your speeds for the first run, and stay next to it
+- only one node on `/cmd_vel`: close teleop before you start yours
+- do not touch the robot's own nodes: they belong to the user `ubuntu`, and you cannot stop
+  them anyway
 
 Advanced:
 - the real lidar sees things the simulated one does not: chair legs, black surfaces, glass,

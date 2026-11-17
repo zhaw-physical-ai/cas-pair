@@ -65,11 +65,11 @@ And check that the node reads the parameter, not a constant.
 
 ## Task 3 - the real robot
 
-- `ros2 node list` empty: a wrong `ROS_DOMAIN_ID`, a terminal set up before you changed it
-  (open a new one, or `ros2 daemon stop`), or the robot is not up yet. Check with
-  `env | grep -E 'RMW|ZENOH|ROS_DOMAIN'`.
+- `ros2 node list` empty: an old `ros2` daemon from before. `ros2 daemon stop`, then again.
+  `printenv RMW_IMPLEMENTATION` must say `rmw_zenoh_cpp`; if not, log out and in again.
+- `ros2 topic hz /scan` works but `node list` is empty: the same old daemon.
 - You tried from RunPod: it cannot work. The ZHAW network accepts no connections from
-  outside, so the robots are reached from inside ZHAW only.
+  outside; you log in to the robot from your laptop on the ZHAW wifi.
 - The robot does not move: is another node publishing on `/cmd_vel` (`ros2 topic info
   /cmd_vel`)? Teleop left running in another terminal holds it too.
 

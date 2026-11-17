@@ -9,7 +9,8 @@ No Jetson: the simulation runs in your browser on a RunPod GPU pod, or in your R
 
 1. **Read the tasks:** [`TB3-TASK-DESCRIPTION.md`](TB3-TASK-DESCRIPTION.md).
 2. **Start the simulator:** [`RUNPOD.md`](RUNPOD.md).
-3. **Write your package** in `~/rap/ros2_ws/src`, from scratch. Push it to your own repo.
+3. **Write your package** in `~/rap/ros2_ws/src`, from scratch. Push it to GitHub - a fork of
+   cas-pair or your own repo.
 
 ## What is here
 
@@ -17,5 +18,4 @@ No Jetson: the simulation runs in your browser on a RunPod GPU pod, or in your R
 |---|---|
 | [`TB3-TASK-DESCRIPTION.md`](TB3-TASK-DESCRIPTION.md) | the tasks, the acceptance tests, the real-robot task and extensions |
 | [`RUNPOD.md`](RUNPOD.md) | the simulation on RunPod: deploy, launch, keep your files |
-| [`runpod_start.sh`](runpod_start.sh) | the RunPod template's start command (teachers) |
-| [`sol/`](sol/) | hints per task, and a reference package - for after you have tried |
+| [`sol/`](sol/) | hints per task, and a reference package - for after you have tried. PLEASE TRY IT YOURSELF FIRST!!!|
