@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<!-- Checkpoint 2: link_segment(name, length, parent) emits one link + one revolute joint.
+     Called three times it gives a chain of three; with the stretch, two arms side by side.
+
+     xacro pendulum.urdf.xacro | check_urdf /dev/stdin
+     xacro pendulum.urdf.xacro two_arms:=true | check_urdf /dev/stdin -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="pendulum">
+
+  <xacro:arg name="two_arms" default="false"/>
+
+  <xacro:property name="radius" value="0.02"/>
+  <xacro:property name="density" value="1000"/>  <!-- kg/m^3, plastic-ish -->
+
+  <!-- prefix is a macro parameter here, not an argument: it differs per call. -->
+  <xacro:macro name="link_segment" params="name length parent prefix:='' parent_length:=0.1">
+    <joint name="${prefix}${name}_joint" type="revolute">
+      <parent link="${prefix}${parent}"/>
+      <child link="${prefix}${name}"/>
+      <origin xyz="0 0 ${parent_length}"/>   <!-- at the tip of the parent -->
+      <axis xyz="0 1 0"/>
+      <limit lower="${radians(-90)}" upper="${radians(90)}" effort="5.0" velocity="1.0"/>
+    </joint>
+    <link name="${prefix}${name}">
+      <visual>
+        <origin xyz="0 0 ${length/2}"/>
+        <geometry><cylinder radius="${radius}" length="${length}"/></geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${length/2}"/>
+        <geometry><cylinder radius="${radius}" length="${length}"/></geometry>
+      </collision>
+      <xacro:property name="m" value="${density * pi * radius**2 * length}"/>
+      <inertial>
+        <origin xyz="0 0 ${length/2}"/>
+        <mass value="${m}"/>
+        <inertia ixx="${m*(3*radius**2 + length**2)/12}" ixy="0" ixz="0"
+                 iyy="${m*(3*radius**2 + length**2)/12}" iyz="0"
+                 izz="${m*radius**2/2}"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="arm" params="prefix:='' y:=0">
+    <joint name="${prefix}mount" type="fixed">
+      <parent link="base_link"/>
+      <child link="${prefix}arm_base"/>
+      <origin xyz="0 ${y} 0"/>
+    </joint>
+    <link name="${prefix}arm_base">
+      <visual>
+        <origin xyz="0 0 0.05"/>
+        <geometry><box size="0.1 0.1 0.1"/></geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.05"/>
+        <geometry><box size="0.1 0.1 0.1"/></geometry>
+      </collision>
+      <!-- solid cube, m = 1 kg, side a = 0.1: ixx = iyy = izz = m a^2 / 6 -->
+      <inertial>
+        <origin xyz="0 0 0.05"/>
+        <mass value="1.0"/>
+        <inertia ixx="${1.0*0.1**2/6}" ixy="0" ixz="0" iyy="${1.0*0.1**2/6}" iyz="0" izz="${1.0*0.1**2/6}"/>
+      </inertial>
+    </link>
+    <xacro:link_segment prefix="${prefix}" name="seg1" length="0.2"  parent="arm_base"/>
+    <xacro:link_segment prefix="${prefix}" name="seg2" length="0.15" parent="seg1" parent_length="0.2"/>
+    <xacro:link_segment prefix="${prefix}" name="seg3" length="0.1"  parent="seg2" parent_length="0.15"/>
+  </xacro:macro>
+
+  <!-- Root link: empty, no inertial. Each arm hangs off it with a fixed joint. -->
+  <link name="base_link"/>
+
+  <xacro:if value="$(arg two_arms)">
+    <xacro:arm prefix="left_"  y="0.2"/>
+    <xacro:arm prefix="right_" y="-0.2"/>
+  </xacro:if>
+  <xacro:unless value="$(arg two_arms)">
+    <xacro:arm/>
+  </xacro:unless>
+
+</robot>

@@ -2,3 +2,4 @@
 __pycache__/
 *.zip
 ref_out/
+so101/sol/urdf/so101_description/meshes/
