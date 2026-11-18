@@ -4,7 +4,7 @@ The students steer a simulated SO-101 robot arm with their phones and record dem
 the red cube onto the green square. No installation, no code: each team needs **two devices**,
 a laptop or a phone as the screen, and a phone as the remote control. Teams of 3 work best: a
 group of 12 at a station splits into 4 teams, each with its own screen and room, so everyone steers.
-The printable instruction card for the students is [`station-d-card.html`](station-d-card.html).
+The printable instruction card for the students: [`station-d-card.html`](station-d-card.html) (English), [`station-d-card-de.html`](station-d-card-de.html) (German).
 
 ## Teacher
 

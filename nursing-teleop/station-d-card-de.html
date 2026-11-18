@@ -1,0 +1,158 @@
+<title>Posten D Anleitung</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+  /* Layout: one A4-like card, steps as a numbered sequence, two setup options side by side, help table at the end */
+  :root {
+    --bg: #f3f6f6; --paper: #ffffff; --ink: #172426; --mute: #4c5d60; --line: #d3dedf;
+    --accent: #0f766e; --accent-soft: #e0f2ef; --rec: #c2410c; --rec-soft: #fdecdf;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #0f1718; --paper: #172224; --ink: #e6eeee; --mute: #a3b4b6; --line: #2c3b3d;
+    --accent: #5eead4; --accent-soft: #123532; --rec: #fb923c; --rec-soft: #3a2316; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #0f1718; --paper: #172224; --ink: #e6eeee; --mute: #a3b4b6; --line: #2c3b3d;
+    --accent: #5eead4; --accent-soft: #123532; --rec: #fb923c; --rec-soft: #3a2316; color-scheme: dark }
+
+  body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body);
+    padding-block: 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .card { max-width: 820px; margin: 0 auto; background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+    padding: 28px clamp(18px, 4vw, 40px); display: grid; gap: 22px; }
+  h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 800; line-height: 1.1; }
+  h2 { font-size: 20px; font-weight: 600; }
+  .eyebrow { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  .lead { font-size: 18px; margin: 6px 0 0; max-width: 62ch; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip { background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 14px; }
+  .task { border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; display: grid; gap: 4px; }
+  .task strong { font-family: var(--display); font-size: 22px; }
+  .task span { color: var(--mute); }
+
+  .setups { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .setup { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+  .setup h3 { margin: 0 0 6px; font-size: 16px; }
+  .setup p { margin: 0; color: var(--mute); font-size: 15px; }
+  .devices { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-weight: 700; }
+  .dev { border: 2px solid var(--ink); border-radius: 6px; display: inline-grid; place-items: center; font-size: 11px; font-weight: 700; }
+  .dev.laptop { width: 64px; height: 40px; } .dev.phone { width: 26px; height: 44px; border-radius: 6px; }
+  .dev.sideways { width: 44px; height: 26px; }
+  .arrow { color: var(--accent); font-size: 20px; }
+
+  ol.steps { list-style: none; counter-reset: s; margin: 0; padding: 0; display: grid; gap: 14px; }
+  ol.steps > li { counter-increment: s; display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
+  ol.steps > li::before { content: counter(s); font-family: var(--display); font-weight: 800; font-size: 20px; width: 36px; height: 36px;
+    border-radius: 50%; background: var(--accent); color: var(--paper); display: grid; place-items: center; }
+  .steps h3 { margin: 4px 0 2px; font-size: 17px; }
+  .steps p, .steps ul { margin: 0; color: var(--ink); }
+  .steps ul { padding-left: 18px; display: grid; gap: 2px; }
+  .min { color: var(--mute); font-weight: 400; font-size: 14px; }
+  .btn { display: inline-block; border: 1px solid var(--line); border-radius: 8px; padding: 0 8px; font-weight: 700; white-space: nowrap; background: var(--bg); }
+  .btn.rec { background: var(--rec-soft); border-color: var(--rec); color: var(--ink); }
+
+  .think { background: var(--accent-soft); border-radius: 12px; padding: 14px 18px; }
+  .think ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+  .help { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--mute); }
+  .online { border-top: 1px dashed var(--line); padding-top: 16px; }
+  .online p { margin: 4px 0 0; max-width: 70ch; }
+  @media (max-width: 640px) { .setups { grid-template-columns: 1fr; } }
+</style>
+
+<main class="card" lang="de">
+  <header>
+    <div class="eyebrow">Posten D · Simulation · 12 Minuten</div>
+    <h1>Bringen Sie einem Roboterarm etwas bei</h1>
+    <p class="lead">Roboter lernen neue Aufgaben, indem sie Menschen dabei zuschauen. Hier sind Sie die Lehrperson:
+      Sie steuern einen simulierten SO-101-Roboterarm mit Ihrem Handy, und jeder gelungene Versuch, den Sie speichern,
+      wird zu einer Vorführung, aus der ein Roboter lernen könnte.</p>
+    <div class="meta"><span class="chip">Teams zu dritt</span><span class="chip">2 Geräte pro Team</span><span class="chip">Keine App, keine Installation</span></div>
+  </header>
+
+  <div class="task">
+    <strong>Ihre Aufgabe: den roten Würfel auf das grüne Feld bringen</strong>
+    <span>Die gleiche Idee wie an Posten A mit den echten Roboterarmen, nur digital.</span>
+  </div>
+
+  <section>
+    <h2>Wählen Sie Ihren Bildschirm</h2>
+    <div class="setups">
+      <div class="setup">
+        <div class="devices"><span class="dev laptop">Bildschirm</span><span class="arrow">←</span><span class="dev phone">steuern</span></div>
+        <h3>Ein Laptop und ein Handy</h3>
+        <p>Der Laptop zeigt den Roboterarm, das Handy steuert ihn. Die beste Sicht für das ganze Team.</p>
+      </div>
+      <div class="setup">
+        <div class="devices"><span class="dev sideways">Bildschirm</span><span class="arrow">←</span><span class="dev phone">steuern</span></div>
+        <h3>Zwei Handys</h3>
+        <p>Ein Handy liegt quer und zeigt den Arm, das andere Handy steuert ihn.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>So geht's</h2>
+    <p class="min" style="margin:0 0 10px">Die Knöpfe in der App sind englisch beschriftet; sie stehen hier so, wie Sie sie sehen.</p>
+    <ol class="steps">
+      <li><div><h3>Roboter auf dem Bildschirm öffnen <span class="min">1 Min.</span></h3>
+        <p>Scannen Sie auf dem Laptop oder dem Bildschirm-Handy den QR-Code am Posten oder öffnen Sie den Link auf Moodle.
+          Der Roboterarm erscheint mit einem grossen QR-Code. Lassen Sie diese Seite offen: Wenn Sie wegwechseln, bleibt der Roboter stehen.</p></div></li>
+      <li><div><h3>Steuer-Handy verbinden <span class="min">1 Min.</span></h3>
+        <p>Scannen Sie mit dem anderen Handy den QR-Code <em>auf dem Bildschirm</em>. Geben Sie Ihren Vornamen oder einen
+          Spitznamen ein und tippen Sie auf <span class="btn">Start</span>. Auf dem iPhone tippen Sie bei der Frage nach dem
+          Bewegungszugriff auf <span class="btn">Erlauben</span>.</p></div></li>
+      <li><div><h3>Steuern üben <span class="min">2 Min.</span></h3>
+        <ul>
+          <li><span class="btn">Tilt the phone</span> (Handy neigen): Daumen auf dem grossen Feld lassen und das Handy neigen.
+            Links / rechts dreht den Arm, die Oberkante von sich weg oder zu sich hin neigen bewegt den Greifer nach vorne oder
+            zurück. Daumen loslassen, und der Arm stoppt.</li>
+          <li><span class="btn">Sliders</span> (Schieberegler): ein Balken zum Drehen, ein Balken zum Ausstrecken oder Zurückziehen. Loslassen, und der Arm stoppt.</li>
+          <li><span class="btn">▲ raise</span> <span class="btn">▼ lower</span> hebt und senkt den Greifer,
+            <span class="btn">Open gripper</span> öffnet und schliesst ihn.</li>
+        </ul></div></li>
+      <li><div><h3>Eine Vorführung aufnehmen <span class="min">je 2 Min.</span></h3>
+        <p>Tippen Sie auf <span class="btn rec">● Start recording</span>. Der Arm geht in seine Startposition und der Würfel
+          verschiebt sich ein wenig. Schieben Sie den Würfel auf das grüne Feld und tippen Sie dann auf <span class="btn">✓ Save</span>
+          (speichern). Hat es nicht geklappt? Tippen Sie auf <span class="btn">✕ Discard</span> (verwerfen) und versuchen Sie es nochmals.</p></div></li>
+      <li><div><h3>Wechseln <span class="min">bis die Zeit um ist</span></h3>
+        <p>Die nächste Person scannt denselben QR-Code auf dem Bildschirm (ist er versteckt, oben in der Ecke auf
+          <span class="btn">QR</span> tippen), gibt den eigenen Namen ein und tippt auf <span class="btn">Take over</span> (übernehmen).
+          Alle im Team nehmen mindestens einmal auf.</p></div></li>
+    </ol>
+  </section>
+
+  <section class="think">
+    <h2>Zum Nachdenken (für die Diskussion später)</h2>
+    <ul>
+      <li>Wie viele Versuche brauchten Sie für eine gute Vorführung? Was hat es schwierig gemacht?</li>
+      <li>Ein Roboter lernt aus vielen Vorführungen wie Ihrer. Wer sollte einem Roboter eine pflegerische Tätigkeit vorführen, und wer entscheidet, was «richtig» ist?</li>
+      <li>Bedarf, Nutzen, Hindernisse: Für welche Aufgabe auf Ihrer Station würden Sie sich das wünschen, und was würde dagegen sprechen?</li>
+    </ul>
+  </section>
+
+  <section class="help">
+    <h2>Wenn etwas nicht klappt</h2>
+    <table>
+      <thead><tr><th>Sie sehen</th><th>Das hilft</th></tr></thead>
+      <tbody>
+        <tr><td>Der Bildschirm zeigt wieder den grossen QR-Code</td><td>Das Steuer-Handy hat die Verbindung verloren: QR-Code nochmals scannen.</td></tr>
+        <tr><td>«Anna is steering»</td><td>Jemand anderes steuert. Tippen Sie auf <span class="btn">Take over</span>, wenn Sie an der Reihe sind.</td></tr>
+        <tr><td>Der Roboter ist eingefroren</td><td>Der Bildschirm hat zu einer anderen App gewechselt oder ist eingeschlafen. Zurück zur Seite gehen; es geht weiter.</td></tr>
+        <tr><td>Neigen bewirkt nichts</td><td><span class="btn">Sliders</span> verwenden.</td></tr>
+        <tr><td>«screen not open» auf dem Steuer-Handy</td><td>Die Roboter-Seite auf dem Bildschirm wieder öffnen.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="online">
+    <h2>Online-Gruppe (30 Minuten)</h2>
+    <p>Öffnen Sie den Moodle-Link auf Ihrem Laptop: Er zeigt den Roboter und einen QR-Code. Scannen Sie diesen QR-Code mit
+      Ihrem eigenen Handy, um zu steuern, allein oder mit einer Kollegin oder einem Kollegen. Ziel: drei gespeicherte
+      Aufnahmen, bei denen der Würfel auf dem grünen Feld landet. Denken Sie danach über die drei Fragen oben nach, für die
+      Diskussion im Webex. Fragen? Stellen Sie sie im Webex-Chat.</p>
+  </section>
+</main>
