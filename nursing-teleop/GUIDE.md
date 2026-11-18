@@ -5,6 +5,7 @@ the red cube onto the green square. No installation, no code: each team needs **
 a laptop or a phone as the screen, and a phone as the remote control. Teams of 3 work best: a
 group of 12 at a station splits into 4 teams, each with its own screen and room, so everyone steers.
 The printable instruction card for the students: [`station-d-card.html`](station-d-card.html) (English), [`station-d-card-de.html`](station-d-card-de.html) (German).
+Setup and test checklist for the teacher, with what you should see at each step: [`TEACHER-CHECKLIST.md`](TEACHER-CHECKLIST.md).
 
 ## Teacher
 

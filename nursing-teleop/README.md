@@ -10,7 +10,7 @@ phone (/phone?room=CODE)  ──WebSocket──►  server  ──WebSocket─�
  start / save recording                    stores episodes        records 30 Hz, uploads episodes
 ```
 
-Step-by-step class workflow for teachers and students: [`GUIDE.md`](GUIDE.md). Design notes for
+Step-by-step class workflow for teachers and students: [`GUIDE.md`](GUIDE.md). Setup and test checklist: [`TEACHER-CHECKLIST.md`](TEACHER-CHECKLIST.md). Design notes for
 coding agents and maintainers: [`CLAUDE.md`](CLAUDE.md).
 
 ## Run it (instructor)
