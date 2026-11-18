@@ -1,0 +1,153 @@
+<title>Station D Card</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+  /* Layout: one A4-like card, steps as a numbered sequence, two setup options side by side, help table at the end */
+  :root {
+    --bg: #f3f6f6; --paper: #ffffff; --ink: #172426; --mute: #4c5d60; --line: #d3dedf;
+    --accent: #0f766e; --accent-soft: #e0f2ef; --rec: #c2410c; --rec-soft: #fdecdf;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #0f1718; --paper: #172224; --ink: #e6eeee; --mute: #a3b4b6; --line: #2c3b3d;
+    --accent: #5eead4; --accent-soft: #123532; --rec: #fb923c; --rec-soft: #3a2316; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #0f1718; --paper: #172224; --ink: #e6eeee; --mute: #a3b4b6; --line: #2c3b3d;
+    --accent: #5eead4; --accent-soft: #123532; --rec: #fb923c; --rec-soft: #3a2316; color-scheme: dark }
+
+  body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body);
+    padding-block: 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .card { max-width: 820px; margin: 0 auto; background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+    padding: 28px clamp(18px, 4vw, 40px); display: grid; gap: 22px; }
+  h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 800; line-height: 1.1; }
+  h2 { font-size: 20px; font-weight: 600; }
+  .eyebrow { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  .lead { font-size: 18px; margin: 6px 0 0; max-width: 62ch; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip { background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 14px; }
+  .task { border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; display: grid; gap: 4px; }
+  .task strong { font-family: var(--display); font-size: 22px; }
+  .task span { color: var(--mute); }
+
+  .setups { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .setup { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+  .setup h3 { margin: 0 0 6px; font-size: 16px; }
+  .setup p { margin: 0; color: var(--mute); font-size: 15px; }
+  .devices { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-weight: 700; }
+  .dev { border: 2px solid var(--ink); border-radius: 6px; display: inline-grid; place-items: center; font-size: 11px; font-weight: 700; }
+  .dev.laptop { width: 64px; height: 40px; } .dev.phone { width: 26px; height: 44px; border-radius: 6px; }
+  .dev.sideways { width: 44px; height: 26px; }
+  .arrow { color: var(--accent); font-size: 20px; }
+
+  ol.steps { list-style: none; counter-reset: s; margin: 0; padding: 0; display: grid; gap: 14px; }
+  ol.steps > li { counter-increment: s; display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
+  ol.steps > li::before { content: counter(s); font-family: var(--display); font-weight: 800; font-size: 20px; width: 36px; height: 36px;
+    border-radius: 50%; background: var(--accent); color: var(--paper); display: grid; place-items: center; }
+  .steps h3 { margin: 4px 0 2px; font-size: 17px; }
+  .steps p, .steps ul { margin: 0; color: var(--ink); }
+  .steps ul { padding-left: 18px; display: grid; gap: 2px; }
+  .min { color: var(--mute); font-weight: 400; font-size: 14px; }
+  .btn { display: inline-block; border: 1px solid var(--line); border-radius: 8px; padding: 0 8px; font-weight: 700; white-space: nowrap; background: var(--bg); }
+  .btn.rec { background: var(--rec-soft); border-color: var(--rec); color: var(--ink); }
+
+  .think { background: var(--accent-soft); border-radius: 12px; padding: 14px 18px; }
+  .think ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+  .help { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--mute); }
+  .online { border-top: 1px dashed var(--line); padding-top: 16px; }
+  .online p { margin: 4px 0 0; max-width: 70ch; }
+  @media (max-width: 640px) { .setups { grid-template-columns: 1fr; } }
+</style>
+
+<main class="card">
+  <header>
+    <div class="eyebrow">Station D · Simulation · 12 minutes</div>
+    <h1>Teach a robot arm with your phone</h1>
+    <p class="lead">Robots learn new tasks by watching people do them. Here you are the teacher: you steer a
+      simulated SO-101 robot arm with your phone, and every successful attempt you save becomes a
+      demonstration a robot could learn from.</p>
+    <div class="meta"><span class="chip">Teams of 3</span><span class="chip">2 devices per team</span><span class="chip">No app, no installation</span></div>
+  </header>
+
+  <div class="task">
+    <strong>Your task: move the red cube onto the green square</strong>
+    <span>The same idea as station A with the real robot arms, but digital.</span>
+  </div>
+
+  <section>
+    <h2>Choose your screen</h2>
+    <div class="setups">
+      <div class="setup">
+        <div class="devices"><span class="dev laptop">screen</span><span class="arrow">←</span><span class="dev phone">steer</span></div>
+        <h3>A laptop and a phone</h3>
+        <p>The laptop shows the robot arm, the phone steers it. Best view for the whole team.</p>
+      </div>
+      <div class="setup">
+        <div class="devices"><span class="dev sideways">screen</span><span class="arrow">←</span><span class="dev phone">steer</span></div>
+        <h3>Two phones</h3>
+        <p>One phone lies sideways and shows the arm, the other phone steers it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What to do</h2>
+    <ol class="steps">
+      <li><div><h3>Open the robot on the screen <span class="min">1 min</span></h3>
+        <p>On the laptop or the screen phone, scan the QR code at the station or open the link on Moodle.
+          The robot arm appears with a big QR code. Keep this page open: if you switch away, the robot stops.</p></div></li>
+      <li><div><h3>Connect the steering phone <span class="min">1 min</span></h3>
+        <p>With the other phone, scan the QR code <em>on the screen</em>. Type your first name or a nickname
+          and tap <span class="btn">Start</span>. On an iPhone, tap <span class="btn">Allow</span> for motion access.</p></div></li>
+      <li><div><h3>Practise steering <span class="min">2 min</span></h3>
+        <ul>
+          <li><span class="btn">Tilt the phone</span>: keep your thumb on the big field and tilt. Left / right turns the arm,
+            tilting the top away or towards you moves the gripper out or in. Lift your thumb to stop.</li>
+          <li><span class="btn">Sliders</span>: one bar to turn, one bar to reach out or pull in. Let go to stop.</li>
+          <li><span class="btn">▲ raise</span> <span class="btn">▼ lower</span> moves the gripper up and down,
+            <span class="btn">Open gripper</span> opens and closes it.</li>
+        </ul></div></li>
+      <li><div><h3>Record a demonstration <span class="min">2 min each</span></h3>
+        <p>Tap <span class="btn rec">● Start recording</span>. The arm goes back to its start and the cube moves a little.
+          Push the cube onto the green square, then tap <span class="btn">✓ Save</span>.
+          Went wrong? Tap <span class="btn">✕ Discard</span> and try again.</p></div></li>
+      <li><div><h3>Swap <span class="min">until time is up</span></h3>
+        <p>The next person scans the same QR code on the screen (tap <span class="btn">QR</span> in its corner if it is hidden),
+          types their own name and taps <span class="btn">Take over</span>. Everyone in the team records at least once.</p></div></li>
+    </ol>
+  </section>
+
+  <section class="think">
+    <h2>Think about it (for the discussion later)</h2>
+    <ul>
+      <li>How many attempts did you need for one good demonstration? What made it hard?</li>
+      <li>A robot learns from many demonstrations like yours. Who should demonstrate a nursing task to a robot, and who decides what is "right"?</li>
+      <li>Need, benefit, barriers: for which task in your ward would you want this, and what would stop it?</li>
+    </ul>
+  </section>
+
+  <section class="help">
+    <h2>If something goes wrong</h2>
+    <table>
+      <thead><tr><th>You see</th><th>Do this</th></tr></thead>
+      <tbody>
+        <tr><td>The screen shows the big QR code again</td><td>The steering phone lost its connection: scan the QR code again.</td></tr>
+        <tr><td>"Anna is steering"</td><td>Someone else steers. Tap <span class="btn">Take over</span> when it is your turn.</td></tr>
+        <tr><td>The robot is frozen</td><td>The screen switched to another app or went to sleep. Go back to the page; it continues.</td></tr>
+        <tr><td>Tilting does nothing</td><td>Use <span class="btn">Sliders</span>.</td></tr>
+        <tr><td>"screen not open" on the steering phone</td><td>Open the robot page on the screen again.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="online">
+    <h2>Online group (30 minutes)</h2>
+    <p>Open the Moodle link on your laptop: it shows the robot and a QR code. Scan that QR code with your own
+      phone to steer, alone or with a colleague. Goal: three saved recordings where the cube ends on the green
+      square. Then think about the three questions above for the Webex discussion. Questions? Ask in the Webex chat.</p>
+  </section>
+</main>

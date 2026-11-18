@@ -1,8 +1,10 @@
 # SO-101 phone teleop: step by step for the class
 
 The students steer a simulated SO-101 robot arm with their phones and record demonstrations: move
-the red cube onto the green square. No laptop, no installation, no code: each group needs **two
-phones**, one as the screen and one as the remote control.
+the red cube onto the green square. No installation, no code: each team needs **two devices**,
+a laptop or a phone as the screen, and a phone as the remote control. Teams of 3 work best: a
+group of 12 at a station splits into 4 teams, each with its own screen and room, so everyone steers.
+The printable instruction card for the students is [`station-d-card.html`](station-d-card.html).
 
 ## Teacher
 
@@ -24,7 +26,9 @@ your laptop sleeps or goes offline, every group stops.
    `https://xxxx.trycloudflare.com/api/episodes`.
 4. Stop everything (Ctrl+C in each terminal).
 
-### Start of class (about 5 minutes)
+### Start of class (about 5 minutes, e.g. at 12:30 for a 13:45 class)
+The tunnel address only exists once the tunnel runs, so it cannot be posted the day before. Start
+early, post the link, and leave everything running until the end of class.
 1. **Terminal 1: start the server.** Choose a word for `TOKEN`: it protects the data download.
    ```
    cd cas-pair/nursing-teleop
@@ -48,7 +52,9 @@ your laptop sleeps or goes offline, every group stops.
    https://xxxx.trycloudflare.com/qr.svg?data=https://xxxx.trycloudflare.com/
    ```
    and show it full screen.
-5. Explain the task and the two roles (screen phone, steering phone), then let the groups start.
+5. **Post the link** `https://xxxx.trycloudflare.com/` on Moodle (or send it to whoever posts
+   it), for the online group and for teams that use a laptop as the screen.
+6. Explain the task and the two roles (screen, steering phone), then let the groups start.
 
 ### During class
 - Progress: `https://xxxx.trycloudflare.com/api/episodes` lists every saved recording with name,
@@ -68,16 +74,16 @@ What is in a recording: see [`README.md`](README.md#the-data).
 
 ## Students
 
-Work in groups. Each group needs two phones.
+Work in teams of 3. Each team needs a screen (a laptop or a phone) and a phone to steer.
 
-### 1. Set up the screen phone
-1. Scan the QR code on the projector.
+### 1. Set up the screen
+1. **Laptop:** open the link from Moodle. **Phone:** scan the QR code on the projector.
 2. The robot arm appears, with a big QR code and a room code.
-3. Turn the phone sideways and prop it up where the whole group can see it.
-4. Leave it on this page: if you switch to another app, the robot freezes.
+3. A phone as the screen: turn it sideways and prop it up where the whole team can see it.
+4. Leave it on this page: if you switch to another app or tab, the robot freezes.
 
 ### 2. Set up the steering phone
-1. Scan the QR code on the **screen phone**.
+1. Scan the QR code **on the screen**.
 2. Type your first name or a nickname and tap **Start**.
 3. On an iPhone, tap **Allow** when it asks for motion access.
 4. The QR code on the screen phone disappears and it shows "*your name* is steering".
@@ -101,14 +107,14 @@ And for both:
 4. Each person records a few times.
 
 ### 5. Take turns
-The next person scans the QR code on the screen phone (tap **QR** in its corner to show it again),
+The next person scans the QR code on the screen (tap **QR** in its corner to show it again),
 types their own name and taps **Take over**. Only one phone steers at a time.
 
 ### If something goes wrong
 | what you see | what to do |
 |---|---|
-| the screen phone shows the big QR code again | the steering phone lost its connection: scan it again |
+| the screen shows the big QR code again | the steering phone lost its connection: scan it again |
 | "*someone* is steering" | tap **Take over** |
-| the robot froze | the screen phone switched apps or locked: go back to the page, it continues |
+| the robot froze | the screen switched apps or tabs, or locked: go back to the page, it continues |
 | tilting does nothing | use **Sliders** |
-| "screen not open" on the steering phone | the screen phone left the page: open it again (same room) |
+| "screen not open" on the steering phone | the screen left the page: open it again (same room) |
