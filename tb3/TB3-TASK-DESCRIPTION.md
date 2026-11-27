@@ -6,50 +6,58 @@ class. Both have the same lidar and the same interfaces, so the same node drives
 
 This is the lab of Session 1 (packages and first nodes). Everything you need was in this
 morning's slides: a package, a publisher, a subscriber, a timer, sensor QoS, parameters and a
-launch file. There is no skeleton: you design the node.
+launch file. You get the package [`random_walk/`](random_walk/) with the important lines taken
+out: each `# TODO` says what the missing line has to do. Write them yourself, without AI - the
+point is that you can explain every line afterwards.
 
 ## The robot's interfaces
 
-| topic | type | direction |
-|---|---|---|
-| `/scan` | `sensor_msgs/msg/LaserScan` | the robot publishes, 5 Hz, 360 rays |
-| `/cmd_vel` | `geometry_msgs/msg/TwistStamped` | the robot subscribes |
-
-**`TwistStamped`, not `Twist`.** On Jazzy the simulated TurtleBot3 takes `TwistStamped`; the
-slides show `Twist`. A `Twist` publisher on `/cmd_vel` never connects to the robot, and your
-node reports no error - the robot just does not move. The velocities are in `msg.twist`; fill
-in `msg.header.stamp` as well. Our real TurtleBot3s (Jazzy) take `TwistStamped` too, so the
-same node drives both.
-
-Units are SI. Top speeds: Burger 0.22 m/s and 2.84 rad/s, Waffle Pi 0.26 m/s and 1.82 rad/s.
-Stay well below them.
+| topic        | type                               | direction                           |
+| ------------ | ---------------------------------- | ----------------------------------- |
+| `/scan`    | `sensor_msgs/msg/LaserScan`      | the robot publishes, 5 Hz, 360 rays |
+| `/cmd_vel` | `geometry_msgs/msg/TwistStamped` | the robot subscribes                |
 
 ## Task 0: Simulator up
 
 Basic:
+
 - start the simulation, on RunPod ([`RUNPOD.md`](RUNPOD.md)) or in your RAP pod
 - drive the robot by hand with teleop once
 - check both interfaces with `ros2 topic info -v`: type, number of publishers and
   subscribers, and the QoS of each
 
 Advanced:
+
 - echo one scan and work out which index of `ranges` looks straight ahead, and which way
   the angles grow. Put an obstacle in front of the robot (drive it to a pillar) and check
 
 ## Task 1: The package
 
 Basic:
-- create an `ament_python` package `random_walk` in `~/rap/ros2_ws/src`, with its
-  dependencies declared up front
-- one node, started with `ros2 run random_walk random_walk`
-- build with `colcon build --symlink-install` and source the overlay
+
+- fork cas-pair on GitHub and clone your fork into your workspace:
+  ```
+  mkdir -p ~/rap/ros2_ws/src && cd ~/rap/ros2_ws/src
+  git clone <your fork>
+  ```
+- the TODOs in `package.xml` and `setup.py`: the dependencies, the launch file, and the
+  executable, so that `ros2 run random_walk random_walk` finds the node
+- build it, and source the overlay:
+  ```
+  cd ~/rap/ros2_ws && colcon build --symlink-install --packages-select random_walk
+  source install/setup.bash
+  ```
+
+  `--packages-select`: your fork holds other ROS packages too, which do not build here
 
 Advanced:
+
 - `ros2 pkg executables random_walk` lists your node; you can say which file made that so
 
 ## Task 2: Random walk
 
-Write the node. It has to meet four requirements:
+The TODOs in `random_walk/decide.py`, `random_walk/node.py` and the launch file. The node has
+to meet four requirements:
 
 1. **Drive.** It moves forward while the space ahead is clear.
 2. **Avoid.** It turns away when something is close ahead - in one direction, without
@@ -63,20 +71,24 @@ Write the node. It has to meet four requirements:
 
 Your node passes these tests. Run them in this order and write down what you saw.
 
-| test | procedure | pass |
-|---|---|---|
-| Start without scans | start your node before the simulator | only zero commands |
-| Open space | robot in a clear area | drives forward |
-| Obstacle ahead | robot drives towards a wall | turns away, one direction, no wriggle |
-| Obstacle cleared | keep watching | drives forward again |
-| Sensor lost | stop the simulation while your node runs | zero commands within about 0.5 s |
-| Stop | `Ctrl+C` your node while the robot drives | the robot stops |
-| Reconfigure | change the threshold in the launch command | behaviour changes, no code edit |
+| test                | procedure                                   | pass                                  |
+| ------------------- | ------------------------------------------- | ------------------------------------- |
+| Start without scans | start your node before the simulator        | only zero commands                    |
+| Open space          | robot in a clear area                       | drives forward                        |
+| Obstacle ahead      | robot drives towards a wall                 | turns away, one direction, no wriggle |
+| Obstacle cleared    | keep watching                               | drives forward again                  |
+| Sensor lost         | stop the simulation while your node runs    | zero commands within about 0.5 s      |
+| Stop                | `Ctrl+C` your node while the robot drives | the robot stops                       |
+| Reconfigure         | change the threshold in the launch command  | behaviour changes, no code edit       |
+
+Before the simulator, test the decision on its own: in the package folder,
+`python3 -m pytest test/` must pass all tests.
 
 `ros2 topic echo /cmd_vel` shows what your node sends. For the "sensor lost" test, `Ctrl+C` the
 Gazebo launch: it takes the scan with it.
 
 Hints:
+
 - ahead is an **angle**, not an index. Compute each ray's angle from `angle_min` and
   `angle_increment`, and keep the rays within ±30° of zero. The TurtleBot3's scan runs from 0
   to 2π, so "ahead" is at both ends of the array
@@ -95,40 +107,44 @@ The same package, on a real robot. Your node runs **on the robot itself**: you l
 Raspberry Pi over ssh, build your package there and start it. The robot's own nodes (motors,
 lidar) are already running - you start only yours.
 
-When your node works in the simulation, **push it to GitHub** - a fork of cas-pair or a repo
-of your own, either works. The robot gets it from there with `git clone`
+When your node works in the simulation, **push it to your fork**. The robot gets it from there
+with `git clone`.
 
 **Show your teacher your random walk passing Task 2's acceptance tests in the simulation.**
 Then you get a robot name and the password for the user `cas`. Your laptop on the ZHAW
 wifi:
 
 1. Log in:
+
    ```
    ssh cas@<robot>
    ```
+
    `cas` has no sudo: you cannot install anything, and you do not need to. ROS 2 and the
    robot's settings are loaded at login.
 2. Check that you see the robot:
+
    ```
    ros2 node list           # turtlebot3_node, diff_drive_controller, hlds_laser_publisher, robot_state_publisher
    ros2 topic hz /scan      # about 5 Hz, Ctrl+C to end
    ```
 3. Your workspace - one per group, in a folder with your group's name, so you do not build
    over the others:
+
    ```
    mkdir -p ~/<group>/src && cd ~/<group>/src
-   git clone <your fork or repo>
-   cd ~/<group> && colcon build --symlink-install
+   git clone <your fork>
+   cd ~/<group> && colcon build --symlink-install --packages-select random_walk
    source install/setup.bash
    ```
 4. Start your launch file with half your speeds and watch which
    way the wheels turn. Ctrl+C: they must stop at once.
 
-
 Each new terminal: `cd ~/<group> && source install/setup.bash`. A fix: change it on RunPod,
 push, then `git pull` and `colcon build` on the robot.
 
 Safety:
+
 - **test "Stop" in simulation first.** A node that does not stop on exit leaves the robot
   driving its last command
 - only one node on `/cmd_vel`: close teleop before you start yours
@@ -136,64 +152,32 @@ Safety:
   them anyway
 
 Advanced:
+
 - the real lidar sees things the simulated one does not: chair legs, black surfaces, glass,
   people's feet. Which acceptance test fails first, and why?
-- watch what the robot sees, on your laptop - see below
 
-### Advanced: watch it on your laptop
+## Task 4: Fun tb3 race (optional)
 
-The robot has no screen, and your RunPod pod cannot reach it. So the scan goes to your laptop:
-a bridge on the robot serves the ROS topics as a WebSocket, an ssh tunnel brings it to your
-laptop, and [Lichtblick](https://github.com/lichtblick-suite/lichtblick) shows it - an
-open-source viewer like RViz, no ROS and no account needed on the laptop. Install it from its
-[releases](https://github.com/lichtblick-suite/lichtblick/releases) (`.deb`, `.dmg` or `.exe`).
+We build a race course on the floor: walls, a start and a goal. Your random walk has no idea
+where the goal is - it only drives and turns away. Which robot gets there first? It is an
+experiment: tune it, try it, keep what helps.
 
-Four terminals - 1 and 2 are two separate `ssh cas@<robot>` logins:
+Rules:
 
-| | where | command |
-|---|---|---|
-| 1 | robot, as `cas` | your node: `ros2 launch <your package> <your launch file>` |
-| 2 | robot, as `cas` | the bridge: `ros2 launch foxglove_bridge foxglove_bridge_launch.xml address:=127.0.0.1` |
-| 3 | laptop | the tunnel: `ssh -N -L 8765:127.0.0.1:8765 cas@<robot>` |
-| 4 | laptop | Lichtblick |
+- one robot on the course at a time, timed from start to goal. Three runs, your best counts:
+  your robot turns in a random direction, so luck plays along
+- your node, started with your launch file. Nobody touches the robot during a run. A robot stuck
+  for 30 s is out for that run
+- `forward_speed` at most 0.20 m/s, the same for Burger and Waffle Pi
+- the safety rules from Task 3 still hold: one node on `/cmd_vel`, `Ctrl+C` stops it
 
-- Terminal 2 ends with `Server listening on port 8765`. `address:=127.0.0.1` keeps the bridge
-  reachable from the robot itself only - not from the whole ZHAW wifi.
-- Terminal 3 forwards port 8765 on your laptop through ssh to the bridge on the robot. After the
-  password it shows nothing and seems to hang: that is the tunnel, open. Leave it. `ssh` is the
-  same in the macOS terminal and in Windows PowerShell.
+What you can change:
 
-In Lichtblick:
-1. **Open connection** → **Foxglove WebSocket** → `ws://localhost:8765` → **Open**.
-2. Add a **3D** panel (or change an existing one: its **⋮** → **Change panel** → **3D**), and
-   enlarge it with the **⛶** in its header. Not the **Map** panel: that one is for GPS.
-3. The **⚙** in the 3D panel's header opens its settings in the left sidebar - check that it
-   says **3D panel** at the top:
-   - **Frame → Display frame:** `odom`
-   - **Topics:** the eye on `/scan` and `/robot_description`
-   - click `/scan`: **Point size** `5`
-4. Zoom with the mouse wheel to the robot. **3D** in the panel's toolbar switches to a top view.
-
-You see the robot and its scan around it, live. Then set **Decay time** of `/scan` to `30`:
-the old scans stay, and while your random walk drives they draw the room. After a minute the
-walls usually blur - the odometry drifts, worst in turns. That is why real robots build their map
-with SLAM, which corrects the drift by matching the scans against each other.
-
-A value of `0` in `/scan`'s `ranges` is below `range_min`: an invalid reading, usually no echo
-in that direction. Lichtblick does not draw it.
-
-## Task 4: Go further (optional)
-
-Pick one.
-
-| extension | question | evidence |
-|---|---|---|
-| Testable logic | is the decision code testable without ROS? | pytest cases for the edge conditions |
-| Timing | how long from "scan lost" to "zero command"? | measured intervals, with and without load |
-| Smarter turn | turn towards the side with more room? | compared against a random choice |
-| Replay | can another team reproduce your result? | a bag, your config, your package revision |
-| C++ port | the same node in rclcpp? | builds, passes the tests above |
-| Two robots | can commands reach the wrong robot? | namespaces or domains, demonstrated |
+- the parameters, from the launch command: `stop_distance`, `clear_distance`, `turn_speed`,
+  `half_angle_deg`, ... - each one your launch file declares as an argument. Which one makes the biggest difference? Write down what you tried and
+  the time it gave
+- the code, if you want: turn towards the side with more room instead of a random side, or
+  follow a wall. Does it beat your tuned random walk?
 
 ## Discussion: would it work on the Go2?
 

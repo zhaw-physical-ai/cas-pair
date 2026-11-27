@@ -1,7 +1,6 @@
-# Solutions and hints for the tb3 tasks
+# Hints for the tb3 tasks
 
-Hints first. [`random_walk/`](random_walk/) is a complete reference package that passes the
-acceptance tests - look at it after you have tried, and compare it with your own design.
+For when you are stuck on a TODO in [`../random_walk/`](../random_walk/). Try it yourself first.
 
 ## Task 0 - simulator up
 
@@ -14,16 +13,15 @@ acceptance tests - look at it after you have tried, and compare it with your own
 
 ## Task 1 - the package
 
-```
-cd ~/rap/ros2_ws/src
-ros2 pkg create random_walk --build-type ament_python --node-name random_walk \
-  --dependencies rclpy geometry_msgs sensor_msgs --license Apache-2.0
-cd ~/rap/ros2_ws && colcon build --symlink-install && source install/setup.bash
-```
-
-`--node-name` writes `random_walk/random_walk.py` and its entry point in `setup.py`. The
-launch file needs `launch` and `launch_ros` in `package.xml` and a `data_files` line in
-`setup.py` - slide 50.
+- `package.xml`: `<depend>` on `rclpy`, `geometry_msgs` and `sensor_msgs` - what the node
+  imports from. `<exec_depend>` on `launch` and `launch_ros` - what the launch file imports.
+- `setup.py`, the launch file - slide 50. Add `import os` and `from glob import glob` at the
+  top, then in `data_files`:
+  `(os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py'))`
+- `setup.py`, the executable: `'random_walk = random_walk.node:main'` in `console_scripts` -
+  name, then module, then function.
+- After changing `setup.py`, build again: `--symlink-install` links your Python files, but not
+  new entry points or data files.
 
 ## Task 2 - random walk
 
@@ -72,29 +70,3 @@ And check that the node reads the parameter, not a constant.
   outside; you log in to the robot from your laptop on the ZHAW wifi.
 - The robot does not move: is another node publishing on `/cmd_vel` (`ros2 topic info
   /cmd_vel`)? Teleop left running in another terminal holds it too.
-
-- Lichtblick connects to nothing: terminal 2 (bridge) or 3 (tunnel) is not running, or the
-  tunnel was opened to another robot. `ws://localhost:8765` only works while both run.
-- The tunnel says `Address already in use`: an old tunnel still runs - close it, or use
-  another port on your laptop: `-L 8766:127.0.0.1:8765` and `ws://localhost:8766`.
-- The 3D panel stays empty: **Display frame** is not `odom`, the eye on `/scan` is off, or the
-  view is far from the robot - zoom in on `odom`. A panel that says "Waiting for first GPS
-  point" is the **Map** panel, the wrong one.
-
-## The reference package
-
-```
-cp -r random_walk ~/rap/ros2_ws/src/
-cd ~/rap/ros2_ws && colcon build --symlink-install --packages-select random_walk
-source install/setup.bash
-ros2 launch random_walk random_walk.launch.py stop_distance:=0.8
-```
-
-| file | what it does |
-|---|---|
-| `random_walk/decide.py` | the decision without ROS: nearest valid range ahead, turn with hysteresis |
-| `random_walk/node.py` | store the scan, decide on a 10 Hz timer, watchdog, stop on exit |
-| `launch/random_walk.launch.py` | starts the node; `stop_distance`, `clear_distance`, `forward_speed`, `stamped` as arguments |
-| `test/test_decide.py` | pytest for `decide.py`: `python3 -m pytest test/` in the package folder |
-
-The turn direction is random - the extension "smarter turn" is still yours.

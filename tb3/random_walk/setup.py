@@ -1,6 +1,3 @@
-import os
-from glob import glob
-
 from setuptools import find_packages, setup
 
 package_name = 'random_walk'
@@ -12,18 +9,19 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        # TODO: install launch/*.launch.py to share/random_walk/launch, or
+        # `ros2 launch random_walk ...` does not find it
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='CAS PAIR',
-    maintainer_email='cas-pair@example.com',
-    description='TurtleBot3 random walk (reference solution)',
+    maintainer='your name',
+    maintainer_email='you@example.com',
+    description='TurtleBot3 random walk',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'random_walk = random_walk.node:main',
+            # TODO: the executable `random_walk`, running main() in random_walk/node.py
         ],
     },
 )

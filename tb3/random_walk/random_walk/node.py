@@ -7,7 +7,7 @@ import math
 import random
 
 import rclpy
-from geometry_msgs.msg import Twist, TwistStamped
+from geometry_msgs.msg import TwistStamped
 from rclpy.clock import Clock, ClockType
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
@@ -28,40 +28,32 @@ class RandomWalk(Node):
         self.declare_parameter('half_angle_deg', 30.0)     # "ahead" = +-30 deg
         self.declare_parameter('scan_timeout', 0.5)        # s without a scan -> zero
         self.declare_parameter('rate_hz', 10.0)
-        self.declare_parameter('stamped', True)            # Jazzy sim: TwistStamped
-        p = {n: self.get_parameter(n).value for n in (
+        self.p = {n: self.get_parameter(n).value for n in (
             'forward_speed', 'turn_speed', 'stop_distance', 'clear_distance',
-            'half_angle_deg', 'scan_timeout', 'rate_hz', 'stamped')}
-        self.p = p
+            'half_angle_deg', 'scan_timeout', 'rate_hz')}
 
-        # Relative names: namespaces and remapping apply. Sensor QoS connects to the real
-        # robot's best-effort lidar driver as well as to the reliable Gazebo bridge.
-        self.pub = self.create_publisher(
-            TwistStamped if p['stamped'] else Twist, 'cmd_vel', 10)
-        self.sub = self.create_subscription(
-            LaserScan, 'scan', self.on_scan, qos_profile_sensor_data)
+        # TODO: a publisher of TwistStamped on the relative topic 'cmd_vel'
+
+        # TODO: a subscription to LaserScan on 'scan' that calls self.on_scan, with
+        # qos_profile_sensor_data - the real robot's lidar publishes best effort
 
         # The watchdog runs on a steady clock, not ROS time: with use_sim_time a stopped
         # simulator also stops ROS time, and a timer on it would never fire to say so.
         self.steady = Clock(clock_type=ClockType.STEADY_TIME)
-        self.timer = self.create_timer(1.0 / p['rate_hz'], self.tick, clock=self.steady)
+        # TODO: a timer that calls self.tick every 1 / rate_hz seconds, on clock=self.steady
+
         self.scan = None
         self.scan_at = None
         self.turn = 0
 
     def on_scan(self, msg):
-        self.scan = msg
-        self.scan_at = self.steady.now()
+        # TODO: store the scan, and when it arrived (self.steady.now()). Nothing else.
+        pass
 
     def tick(self):
         p = self.p
-        if self.scan_at is None or \
-                (self.steady.now() - self.scan_at).nanoseconds * 1e-9 > p['scan_timeout']:
-            if self.turn or self.scan_at is not None:
-                self.get_logger().warn('no recent scan - stopping', throttle_duration_sec=2.0)
-            self.turn = 0
-            self.send(0.0, 0.0)
-            return
+        # TODO: no scan yet, or the last one older than scan_timeout: self.turn = 0, send zero,
+        # return. (self.steady.now() - self.scan_at).nanoseconds * 1e-9 is its age in seconds.
 
         s = self.scan
         nearest = nearest_ahead(s.angle_min, s.angle_increment, s.ranges,
@@ -69,42 +61,33 @@ class RandomWalk(Node):
         turn = next_turn(self.turn, nearest, p['stop_distance'], p['clear_distance'],
                          lambda: random.choice((-1, 1)))
         if turn != self.turn:
-            self.get_logger().info(
-                f'nearest ahead {nearest}: ' + ('drive' if turn == 0 else
-                                                'turn ' + ('left' if turn > 0 else 'right')))
+            self.get_logger().info(f'nearest ahead {nearest}: turn {turn}')
         self.turn = turn
-        if turn:
-            self.send(0.0, turn * p['turn_speed'])
-        else:
-            self.send(p['forward_speed'], 0.0)
+
+        # TODO: turning: send zero forward speed and turn * turn_speed. Otherwise drive forward.
 
     def send(self, linear, angular):
-        if self.p['stamped']:
-            msg = TwistStamped()
-            msg.header.stamp = self.get_clock().now().to_msg()
-            msg.header.frame_id = 'base_link'
-            t = msg.twist
-        else:
-            msg = t = Twist()
-        t.linear.x = linear
-        t.angular.z = angular
-        self.pub.publish(msg)
+        msg = TwistStamped()
+        # TODO: fill in msg.header.stamp (the node's clock, now, as a message) and
+        # msg.header.frame_id = 'base_link'
+
+        # TODO: the velocities go in msg.twist: linear.x in m/s, angular.z in rad/s
+
+        # TODO: publish it
 
 
 def main(args=None):
-    # No ROS signal handler: by default Ctrl+C shuts the context down before we get a
-    # chance to publish. Here it arrives as KeyboardInterrupt, the stop goes out, then
-    # shutdown. The robot keeps its last command otherwise.
-    rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
+    # TODO: rclpy.init, without ROS's own signal handler (SignalHandlerOptions.NO). With it,
+    # Ctrl+C shuts ROS down before your `finally` runs, the stop below goes nowhere, and the
+    # robot keeps driving its last command.
     node = RandomWalk()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
-        node.send(0.0, 0.0)
-        node.destroy_node()
-        rclpy.try_shutdown()
+        # TODO: send the stop, then destroy the node and shut down (rclpy.try_shutdown)
+        pass
 
 
 if __name__ == '__main__':
